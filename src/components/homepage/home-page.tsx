@@ -47,7 +47,7 @@ export function HomePage() {
 
   useEffect(() => {
     const hasWallpaper = Boolean(preferences.wallpaperImage);
-    const contrast = resolveContrast(preferences.contrast, hasWallpaper, preferences.theme);
+    const contrast = resolveContrast(preferences.contrast, hasWallpaper, preferences.theme, preferences.wallpaperLuminance);
     const textPair = getReadableTextPair(contrast);
     document.body.className = `theme-${preferences.theme} font-${preferences.font} contrast-${contrast} ${
       hasWallpaper ? "has-wallpaper" : ""

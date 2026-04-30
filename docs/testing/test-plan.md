@@ -9,6 +9,8 @@
 - Store action for changing font preference.
 - Store action for theme controls: accent color, opacity, blur, contrast, favorite scale, and widget scale.
 - Theme utility CSS variable generation and readable text pairs.
+- Auto contrast resolution: dark wallpapers flip to light text, bright wallpapers keep dark text, missing luminance falls back to dark.
+- Average luminance computation handles white, black, mid-tone, and empty pixel buffers.
 - Website metadata extraction and favicon fallback.
 - Open-Meteo forecast URL generation with Celsius and automatic timezone.
 - Date and clock formatting helpers.

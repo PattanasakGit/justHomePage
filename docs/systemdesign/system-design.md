@@ -28,6 +28,7 @@ Preferences use separate fields for visual mode and media:
 
 - `theme`: color theme id.
 - `wallpaperImage`: compressed local image data URL or `null`.
+- `wallpaperLuminance`: average perceived luminance (0–1) sampled from the wallpaper at upload time, or `null` for legacy wallpapers; consumed by auto-contrast resolution to flip text color on dark images.
 - `font`: selected font style id.
 - `accentColor`: primary system color used by controls, focus rings, selected states, and accents.
 - `uiOpacity`: opacity of glass surfaces.
@@ -35,7 +36,7 @@ Preferences use separate fields for visual mode and media:
 - `contrast`: automatic/dark/light text mode.
 - `favoriteScale` and `widgetScale`: independent layout density controls.
 
-The store migrates legacy `background` and `backgroundImage` persisted keys into `theme` and `wallpaperImage`.
+The store migrates legacy `background` and `backgroundImage` persisted keys into `theme` and `wallpaperImage`. The persistence version is bumped when new preference fields are introduced (e.g. `wallpaperLuminance`); legacy persisted state without the field falls back to `null` and behaves like pre-luminance auto contrast (dark text).
 
 When `wallpaperImage` exists, the body receives `has-wallpaper`; CSS makes the uploaded image the visible page background and leaves the theme class active for tokens/accent colors. Without a wallpaper, the theme gradient is the page background.
 

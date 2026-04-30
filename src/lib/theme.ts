@@ -6,6 +6,8 @@ type ThemeVariableInput = Pick<Preferences, "accentColor" | "uiOpacity" | "blur"
 
 const HEX_RE = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
 
+const WALLPAPER_LIGHT_TEXT_THRESHOLD = 0.55;
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -33,9 +35,18 @@ export function getReadableTextPair(contrast: Exclude<ContrastMode, "auto">) {
   return { ink: "#17201b", muted: "#66736c" };
 }
 
-export function resolveContrast(contrast: ContrastMode, hasWallpaper: boolean, theme: Preferences["theme"]) {
+export function resolveContrast(
+  contrast: ContrastMode,
+  hasWallpaper: boolean,
+  theme: Preferences["theme"],
+  wallpaperLuminance: number | null,
+) {
   if (contrast !== "auto") return contrast;
-  return theme === "graphite" && !hasWallpaper ? "light" : "dark";
+  if (hasWallpaper) {
+    if (wallpaperLuminance === null) return "dark";
+    return wallpaperLuminance < WALLPAPER_LIGHT_TEXT_THRESHOLD ? "light" : "dark";
+  }
+  return theme === "graphite" ? "light" : "dark";
 }
 
 export function buildThemeVariables({ accentColor, uiOpacity, blur, contrast = "dark" }: ThemeVariableInput) {

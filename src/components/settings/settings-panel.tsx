@@ -59,7 +59,8 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
     if (!file) return;
     setUploadStatus("loading");
     try {
-      setWallpaperImage(await prepareWallpaperImage(file));
+      const { dataUrl, luminance } = await prepareWallpaperImage(file);
+      setWallpaperImage(dataUrl, luminance);
       setUploadStatus("idle");
     } catch {
       setUploadStatus("error");

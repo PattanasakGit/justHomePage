@@ -47,6 +47,7 @@ export type Preferences = {
   searchProvider: SearchProviderId;
   theme: BackgroundId;
   wallpaperImage: string | null;
+  wallpaperLuminance: number | null;
   font: FontId;
   accentColor: string;
   uiOpacity: number;

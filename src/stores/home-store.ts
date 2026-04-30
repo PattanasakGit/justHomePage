@@ -33,7 +33,7 @@ export type HomeState = {
   reorderWidgets: (activeId: string, overId: string) => void;
   setSearchProvider: (provider: SearchProviderId) => void;
   setTheme: (theme: BackgroundId) => void;
-  setWallpaperImage: (wallpaperImage: string | null) => void;
+  setWallpaperImage: (wallpaperImage: string | null, wallpaperLuminance?: number | null) => void;
   setFont: (font: FontId) => void;
   setThemeControls: (controls: Partial<Pick<Preferences, "accentColor" | "uiOpacity" | "blur" | "contrast" | "favoriteScale" | "widgetScale">>) => void;
   setEditMode: (editMode: boolean) => void;
@@ -106,8 +106,14 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
   setSearchProvider: (searchProvider) =>
     set((state) => ({ preferences: { ...state.preferences, searchProvider } })),
   setTheme: (theme) => set((state) => ({ preferences: { ...state.preferences, theme } })),
-  setWallpaperImage: (wallpaperImage) =>
-    set((state) => ({ preferences: { ...state.preferences, wallpaperImage } })),
+  setWallpaperImage: (wallpaperImage, wallpaperLuminance = null) =>
+    set((state) => ({
+      preferences: {
+        ...state.preferences,
+        wallpaperImage,
+        wallpaperLuminance: wallpaperImage ? wallpaperLuminance : null,
+      },
+    })),
   setFont: (font) => set((state) => ({ preferences: { ...state.preferences, font } })),
   setThemeControls: (controls) => set((state) => ({ preferences: { ...state.preferences, ...controls } })),
   setEditMode: (editMode) => set((state) => ({ preferences: { ...state.preferences, editMode } })),
@@ -120,12 +126,13 @@ export function createHomeStore() {
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 3,
+    version: 4,
     migrate: (persisted) => {
       const state = persisted as Partial<HomeState> & {
         preferences?: Partial<Preferences> & {
           background?: BackgroundId;
           backgroundImage?: string | null;
+          wallpaperLuminance?: number | null;
         };
       };
       if (!state.preferences) return persisted as HomeState;
@@ -138,6 +145,7 @@ export const useHomeStore = create<HomeState>()(
           theme: state.preferences.theme ?? state.preferences.background ?? defaultPreferences.theme,
           wallpaperImage:
             state.preferences.wallpaperImage ?? state.preferences.backgroundImage ?? defaultPreferences.wallpaperImage,
+          wallpaperLuminance: state.preferences.wallpaperLuminance ?? defaultPreferences.wallpaperLuminance,
           font: state.preferences.font ?? defaultPreferences.font,
           accentColor: state.preferences.accentColor ?? defaultPreferences.accentColor,
           uiOpacity: state.preferences.uiOpacity ?? defaultPreferences.uiOpacity,

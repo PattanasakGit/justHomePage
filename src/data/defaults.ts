@@ -38,6 +38,7 @@ export const defaultPreferences: Preferences = {
   searchProvider: "google",
   theme: "linen",
   wallpaperImage: null,
+  wallpaperLuminance: null,
   font: "system",
   accentColor: "#339b8e",
   uiOpacity: 76,
