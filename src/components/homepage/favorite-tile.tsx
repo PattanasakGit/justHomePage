@@ -4,7 +4,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { memo, useEffect, useRef } from "react";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import { getBrandIcon } from "@/components/icons/brand-icon";
+import { LETTER_ICON, getBrandIcon } from "@/components/icons/brand-icon";
+import { getLetterAvatar } from "@/lib/letter-avatar";
 import type { Favorite, UIScale } from "@/lib/types";
 
 const favoriteSize: Record<UIScale, { card: string; icon: string; iconInner: string; text: string }> = {
@@ -75,14 +76,18 @@ export const FavoriteTile = memo(function FavoriteTile({
         className={`flex h-full w-full ${size.card} flex-col items-center justify-center gap-2 rounded-[18px] p-3 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]`}
         aria-label={favorite.title}
       >
-        <span className={`grid ${size.icon} place-items-center bg-white/85 shadow-inner`}>
-          {favorite.iconUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+        {favorite.iconUrl ? (
+          <span className={`grid ${size.icon} place-items-center bg-white/85 shadow-inner`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={favorite.iconUrl} alt="" className={`${size.iconInner} rounded-lg object-contain`} loading="lazy" />
-          ) : (
+          </span>
+        ) : favorite.icon === LETTER_ICON ? (
+          <LetterAvatarBadge title={favorite.title} sizeClass={size.icon} />
+        ) : (
+          <span className={`grid ${size.icon} place-items-center bg-white/85 shadow-inner`}>
             <Icon aria-hidden style={{ color: brand.color }} />
-          )}
-        </span>
+          </span>
+        )}
         <span className={`max-w-full truncate ${size.text} font-semibold`}>{favorite.title}</span>
       </button>
 
@@ -111,3 +116,16 @@ export const FavoriteTile = memo(function FavoriteTile({
     </div>
   );
 });
+
+function LetterAvatarBadge({ title, sizeClass }: { title: string; sizeClass: string }) {
+  const { letter, color } = getLetterAvatar(title);
+  return (
+    <span
+      className={`grid ${sizeClass} place-items-center text-lg font-bold uppercase text-white shadow-inner`}
+      style={{ backgroundColor: color }}
+      aria-hidden
+    >
+      {letter}
+    </span>
+  );
+}

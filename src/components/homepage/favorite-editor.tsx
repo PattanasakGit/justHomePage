@@ -2,7 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FiRefreshCw, FiX } from "react-icons/fi";
-import { getBrandIcon, iconChoices } from "@/components/icons/brand-icon";
+import { LETTER_ICON, getBrandIcon, iconChoices } from "@/components/icons/brand-icon";
+import { getLetterAvatar } from "@/lib/letter-avatar";
 import type { Favorite, FavoriteInput } from "@/lib/types";
 import { inferTitleFromUrl, normalizeUrl } from "@/lib/url";
 
@@ -16,7 +17,7 @@ type FavoriteEditorProps = {
 export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEditorProps) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
-  const [icon, setIcon] = useState("globe");
+  const [icon, setIcon] = useState<string>(LETTER_ICON);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [metadataStatus, setMetadataStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const normalizedUrl = useMemo(() => normalizeUrl(url), [url]);
@@ -26,7 +27,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
     if (!open) return;
     setTitle(favorite?.title ?? "");
     setUrl(favorite?.url ?? "");
-    setIcon(favorite?.icon ?? "globe");
+    setIcon(favorite?.icon ?? LETTER_ICON);
     setIconUrl(favorite?.iconUrl ?? null);
     setMetadataStatus("idle");
   }, [favorite, open]);
@@ -143,11 +144,13 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
             {iconChoices.map((choice) => {
               const brand = getBrandIcon(choice);
               const Icon = brand.icon;
+              const isLetter = choice === LETTER_ICON;
+              const letterAvatar = isLetter ? getLetterAvatar(title || "Aa") : null;
               return (
                 <button
                   key={choice}
                   type="button"
-                  aria-label={`Use ${brand.label} logo`}
+                  aria-label={isLetter ? "Use letter avatar" : `Use ${brand.label} logo`}
                   onClick={() => {
                     setIcon(choice);
                     setIconUrl(null);
@@ -156,7 +159,16 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
                     icon === choice ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--border)] bg-[color:var(--surface)]"
                   }`}
                 >
-                  <Icon style={{ color: brand.color }} />
+                  {letterAvatar ? (
+                    <span
+                      className="grid h-7 w-7 place-items-center rounded-xl text-xs font-bold uppercase text-white"
+                      style={{ backgroundColor: letterAvatar.color }}
+                    >
+                      {letterAvatar.letter}
+                    </span>
+                  ) : (
+                    <Icon style={{ color: brand.color }} />
+                  )}
                 </button>
               );
             })}
