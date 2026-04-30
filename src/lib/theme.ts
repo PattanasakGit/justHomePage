@@ -1,3 +1,4 @@
+import { DARK_THEME_IDS } from "@/data/themes";
 import type { ContrastMode, Preferences } from "./types";
 
 type ThemeVariableInput = Pick<Preferences, "accentColor" | "uiOpacity" | "blur"> & {
@@ -7,15 +8,6 @@ type ThemeVariableInput = Pick<Preferences, "accentColor" | "uiOpacity" | "blur"
 const HEX_RE = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
 
 const WALLPAPER_LIGHT_TEXT_THRESHOLD = 0.55;
-
-const DARK_THEMES: ReadonlySet<Preferences["theme"]> = new Set([
-  "graphite",
-  "ocean",
-  "forest",
-  "midnight",
-  "nebula",
-  "plum",
-]);
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -55,7 +47,7 @@ export function resolveContrast(
     if (wallpaperLuminance === null) return "dark";
     return wallpaperLuminance < WALLPAPER_LIGHT_TEXT_THRESHOLD ? "light" : "dark";
   }
-  return DARK_THEMES.has(theme) ? "light" : "dark";
+  return DARK_THEME_IDS.has(theme) ? "light" : "dark";
 }
 
 export function buildThemeVariables({ accentColor, uiOpacity, blur, contrast = "dark" }: ThemeVariableInput) {

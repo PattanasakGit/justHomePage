@@ -15,37 +15,23 @@ import {
   FiX,
 } from "react-icons/fi";
 import { getBrandIcon } from "@/components/icons/brand-icon";
+import { themeCatalog, getThemeDefinition, getDefaultAccent } from "@/data/themes";
 import { prepareWallpaperImage } from "@/lib/image-file";
 import { fontOptions } from "@/lib/fonts";
 import { searchProviders } from "@/lib/search";
 import { buildThemeVariables, resolveContrast } from "@/lib/theme";
-import type { BackgroundId, ContrastMode, Preferences, UIScale } from "@/lib/types";
+import type { BackgroundId, ContrastMode, Preferences, ThemeCategory, UIScale } from "@/lib/types";
 import { useHomeStore } from "@/stores/home-store";
 
 type ThemeDraft = Pick<Preferences, "accentColor" | "uiOpacity" | "blur">;
 
 type SettingsSection = "home" | "theme" | "wallpaper" | "search" | "font" | "layout";
 
-const backgrounds: Array<{ id: BackgroundId; label: string; preview: string }> = [
-  { id: "linen", label: "Linen", preview: "from-[#d8eee7] via-[#f8f2e9] to-[#efd9cf]" },
-  { id: "aurora", label: "Aurora", preview: "from-[#b9ded4] via-[#eef5ef] to-[#e8b4a8]" },
-  { id: "sky", label: "Sky", preview: "from-[#d9edf4] via-[#f7f3e8] to-[#cfe4dd]" },
-  { id: "sunset", label: "Sunset", preview: "from-[#ffe2cc] via-[#ffd1d6] to-[#f3c5d8]" },
-  { id: "rose", label: "Rose", preview: "from-[#fdf0ee] via-[#fbe1e8] to-[#f7d4e0]" },
-  { id: "honey", label: "Honey", preview: "from-[#fff3d6] via-[#ffe1ad] to-[#f7c98a]" },
-  { id: "sand", label: "Sand", preview: "from-[#f3ead8] via-[#ece1cc] to-[#e2d5bb]" },
-  { id: "mint", label: "Mint", preview: "from-[#e6f7ee] via-[#d3f0e0] to-[#c4e9d6]" },
-  { id: "lavender", label: "Lavender", preview: "from-[#ece4f7] via-[#ddd0ef] to-[#c9b9e5]" },
-  { id: "slate", label: "Slate", preview: "from-[#e6ebf0] via-[#dee5ec] to-[#ccd6e0]" },
-  { id: "graphite", label: "Graphite", preview: "from-[#202620] via-[#43534d] to-[#242a27]" },
-  { id: "ocean", label: "Ocean", preview: "from-[#0f3a55] via-[#144a6a] to-[#0d2c44]" },
-  { id: "forest", label: "Forest", preview: "from-[#1f3027] via-[#2c4636] to-[#1a2620]" },
-  { id: "midnight", label: "Midnight", preview: "from-[#131634] via-[#1f2350] to-[#0e1024]" },
-  { id: "nebula", label: "Nebula", preview: "from-[#1c1238] via-[#2b1c4f] to-[#150e29]" },
-  { id: "plum", label: "Plum", preview: "from-[#2a1430] via-[#3e1d44] to-[#1c0e22]" },
+const themeCategoryTabs: Array<{ id: ThemeCategory; label: string }> = [
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
 ];
 
-const accentSwatches = ["#339b8e", "#4f8cff", "#8b5cf6", "#ef6f53", "#f59e0b", "#111827"];
 const contrastModes: Array<{ id: ContrastMode; label: string }> = [
   { id: "auto", label: "Auto" },
   { id: "dark", label: "Dark text" },
@@ -144,98 +130,12 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
         ) : null}
 
         {section === "theme" ? (
-          <div className="mt-7">
-            <section>
-              <h3 className="text-sm font-semibold text-[color:var(--muted)]">Theme base</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {backgrounds.map((background) => (
-                  <button
-                    key={background.id}
-                    type="button"
-                    aria-label={`${background.label} background`}
-                    onClick={() => setTheme(background.id)}
-                    className={`h-24 overflow-hidden rounded-[18px] border p-2 text-left text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-                      preferences.theme === background.id ? "border-[color:var(--accent)]" : "border-[color:var(--border)]"
-                    }`}
-                  >
-                    <span className={`block h-full rounded-[14px] bg-gradient-to-br ${background.preview}`} />
-                    <span className="sr-only">{background.label}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-7">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]">
-                <FiDroplet />
-                Primary color
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <input
-                  type="color"
-                  aria-label="Primary theme color"
-                  value={preferences.accentColor}
-                  onChange={(event) => setThemeControls({ accentColor: event.target.value })}
-                  onInput={(event) => previewTheme({ accentColor: event.currentTarget.value })}
-                  className="h-11 w-14 cursor-pointer rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {accentSwatches.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      aria-label={`Use ${color} as primary color`}
-                      onClick={() => setThemeControls({ accentColor: color })}
-                      className={`h-9 w-9 rounded-full border-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-                        preferences.accentColor.toLowerCase() === color ? "border-[color:var(--ink)]" : "border-white/80"
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-7">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]">
-                <FiLayers />
-                System glass
-              </div>
-              <RangeField
-                label="Transparency"
-                min={42}
-                max={96}
-                value={preferences.uiOpacity}
-                suffix="% solid"
-                onPreview={(value) => previewTheme({ uiOpacity: value })}
-                onCommit={(value) => setThemeControls({ uiOpacity: value })}
-              />
-              <RangeField
-                label="Blur"
-                min={0}
-                max={28}
-                value={preferences.blur}
-                suffix="px"
-                onPreview={(value) => previewTheme({ blur: value })}
-                onCommit={(value) => setThemeControls({ blur: value })}
-              />
-            </section>
-
-            <section className="mt-7">
-              <h3 className="text-sm font-semibold text-[color:var(--muted)]">Text contrast</h3>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {contrastModes.map((mode) => (
-                  <SegmentButton
-                    key={mode.id}
-                    active={preferences.contrast === mode.id}
-                    onClick={() => setThemeControls({ contrast: mode.id })}
-                  >
-                    {mode.label}
-                  </SegmentButton>
-                ))}
-              </div>
-            </section>
-          </div>
+          <ThemeSection
+            preferences={preferences}
+            setTheme={setTheme}
+            setThemeControls={setThemeControls}
+            previewTheme={previewTheme}
+          />
         ) : null}
 
         {section === "wallpaper" ? (
@@ -424,29 +324,175 @@ function RangeField({
     setDraft(value);
   }
 
+  const fillPercent = ((draft - min) / Math.max(1, max - min)) * 100;
+
   return (
-    <label className="mt-3 block text-sm font-semibold text-[color:var(--muted)]">
-      {label}
-      <input
-        type="range"
-        aria-label={label}
-        min={min}
-        max={max}
-        value={draft}
-        onInput={(event) => {
-          const next = Number(event.currentTarget.value);
-          setDraft(next);
-          onPreview(next);
-        }}
-        onChange={(event) => onCommit(Number(event.target.value))}
-        onPointerUp={() => onCommit(draft)}
-        onKeyUp={() => onCommit(draft)}
-        className="mt-2 w-full accent-[color:var(--accent)]"
-      />
-      <span className="text-xs">
-        {draft}
-        {suffix}
-      </span>
-    </label>
+    <div className="mt-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">{label}</span>
+        <span className="rounded-full bg-[color:var(--surface)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--ink)]">
+          {draft}
+          {suffix}
+        </span>
+      </div>
+      <div className="relative mt-3 h-7">
+        <span className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[color:var(--surface)]" aria-hidden />
+        <span
+          className="pointer-events-none absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[color:var(--accent)]"
+          style={{ width: `${fillPercent}%` }}
+          aria-hidden
+        />
+        <input
+          type="range"
+          aria-label={label}
+          min={min}
+          max={max}
+          value={draft}
+          onInput={(event) => {
+            const next = Number(event.currentTarget.value);
+            setDraft(next);
+            onPreview(next);
+          }}
+          onChange={(event) => onCommit(Number(event.target.value))}
+          onPointerUp={() => onCommit(draft)}
+          onKeyUp={() => onCommit(draft)}
+          className="theme-range absolute inset-0 w-full appearance-none bg-transparent focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ThemeSection({
+  preferences,
+  setTheme,
+  setThemeControls,
+  previewTheme,
+}: {
+  preferences: Preferences;
+  setTheme: (theme: BackgroundId) => void;
+  setThemeControls: (controls: Partial<Pick<Preferences, "accentColor" | "uiOpacity" | "blur" | "contrast" | "favoriteScale" | "widgetScale">>) => void;
+  previewTheme: (override: Partial<ThemeDraft>) => void;
+}) {
+  const currentDef = getThemeDefinition(preferences.theme);
+  const initialCategory: ThemeCategory = currentDef.category;
+  const [tab, setTab] = useState<ThemeCategory>(initialCategory);
+
+  const themesForTab = themeCatalog.filter((theme) => theme.category === tab);
+  const accents = currentDef.accents;
+
+  function pickTheme(id: BackgroundId) {
+    setTheme(id);
+    const next = getThemeDefinition(id);
+    if (!next.accents.includes(preferences.accentColor)) {
+      setThemeControls({ accentColor: getDefaultAccent(id) });
+    }
+  }
+
+  return (
+    <div className="mt-6">
+      <section>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-[color:var(--muted)]">Theme base</h3>
+          <div className="inline-flex rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] p-1 text-xs font-semibold">
+            {themeCategoryTabs.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => setTab(entry.id)}
+                className={`min-w-[58px] rounded-full px-3 py-1 transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
+                  tab === entry.id ? "bg-[color:var(--ink)] text-[color:var(--ink-inverse)]" : "text-[color:var(--muted)]"
+                }`}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {themesForTab.map((theme) => (
+            <button
+              key={theme.id}
+              type="button"
+              aria-label={`${theme.label} theme`}
+              onClick={() => pickTheme(theme.id)}
+              className={`relative h-24 overflow-hidden rounded-[18px] border p-2 text-left text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
+                preferences.theme === theme.id ? "border-[color:var(--accent)]" : "border-[color:var(--border)]"
+              }`}
+            >
+              <span className={`block h-full rounded-[14px] bg-gradient-to-br ${theme.preview}`} />
+              <span className="absolute inset-x-2 bottom-2 flex items-center justify-between rounded-full bg-black/35 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+                {theme.label}
+                <span className="text-[9px] uppercase tracking-[0.18em] opacity-80">{theme.style}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-7">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]">
+          <FiDroplet />
+          Primary color
+        </div>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Hand-picked accents for {currentDef.label}.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {accents.map((color) => (
+            <button
+              key={color}
+              type="button"
+              aria-label={`Use ${color} as primary color`}
+              onClick={() => setThemeControls({ accentColor: color })}
+              className={`relative h-11 w-11 rounded-2xl border-2 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
+                preferences.accentColor.toLowerCase() === color.toLowerCase()
+                  ? "scale-105 border-[color:var(--ink)]"
+                  : "border-transparent"
+              }`}
+              style={{ backgroundColor: color }}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-7">
+        <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--muted)]">
+          <FiLayers />
+          System glass
+        </div>
+        <RangeField
+          label="Transparency"
+          min={42}
+          max={96}
+          value={preferences.uiOpacity}
+          suffix="% solid"
+          onPreview={(value) => previewTheme({ uiOpacity: value })}
+          onCommit={(value) => setThemeControls({ uiOpacity: value })}
+        />
+        <RangeField
+          label="Blur"
+          min={0}
+          max={28}
+          value={preferences.blur}
+          suffix="px"
+          onPreview={(value) => previewTheme({ blur: value })}
+          onCommit={(value) => setThemeControls({ blur: value })}
+        />
+      </section>
+
+      <section className="mt-7">
+        <h3 className="text-sm font-semibold text-[color:var(--muted)]">Text contrast</h3>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {contrastModes.map((mode) => (
+            <SegmentButton
+              key={mode.id}
+              active={preferences.contrast === mode.id}
+              onClick={() => setThemeControls({ contrast: mode.id })}
+            >
+              {mode.label}
+            </SegmentButton>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

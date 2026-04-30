@@ -22,6 +22,18 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 - Use stable dimensions for tiles and widgets.
 - Background upload previews through the page background layer with a subtle blur/veil for contrast.
 
+## Theme Catalog
+
+- Themes live in `src/data/themes.ts` as a single `themeCatalog` array; each entry has `category` (`light`/`dark`), `style` (`soft`/`minimal`/`vibrant`/`neon`), a Tailwind preview gradient, and a curated `accents` palette.
+- Settings UI groups themes under Light/Dark tabs and labels each thumbnail with its style tag.
+- Picking a theme also resets the accent to the theme's first palette entry when the current accent is not part of the new palette.
+
+## Sliders
+
+- Use the shared `RangeField` with a custom track (filled portion uses `--accent`) and themed thumb (`.theme-range`).
+- The current value is displayed as a chip on the right of the slider label, in `--ink` text on a `--surface` chip.
+- Drag updates write CSS variables directly via `buildThemeVariables`; the store commit only fires on release.
+
 ## Theme Tokens
 
 - `--ink` — primary text color, flips with auto contrast.

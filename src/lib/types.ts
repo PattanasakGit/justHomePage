@@ -17,19 +17,33 @@ export type BackgroundId =
   | "linen"
   | "aurora"
   | "sky"
-  | "graphite"
   | "sunset"
   | "rose"
   | "honey"
   | "sand"
   | "mint"
-  | "ocean"
   | "lavender"
-  | "forest"
   | "slate"
+  | "paper"
+  | "mist"
+  | "blush"
+  | "dawn"
+  | "ivory"
+  | "graphite"
+  | "ocean"
+  | "forest"
   | "midnight"
   | "nebula"
-  | "plum";
+  | "plum"
+  | "noir"
+  | "inferno"
+  | "neonCyan"
+  | "neonPink"
+  | "neonViolet"
+  | "abyss"
+  | "cyber";
+
+export type ThemeCategory = "light" | "dark";
 
 export type FontId = "system" | "rounded" | "editorial" | "thaiSoft" | "mono";
 

@@ -17,9 +17,10 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - A letter-avatar fallback is the default icon for new favorites — a colored circle with the first letter of the title, shown when no brand icon or metadata logo is selected.
 - Sync local timezone, location label, and current temperature in Celsius when browser location permission is granted.
 - Configurable theme color separated from wallpaper image.
-- Theme catalog covers warm, cool, dark, and neutral moods with at least a dozen distinct gradient bases.
+- Theme catalog covers warm, cool, dark, and neutral moods with at least two dozen distinct gradient bases grouped by Light/Dark tabs and tagged by style (soft, minimal, vibrant, neon).
+- Each theme ships with a hand-picked palette of primary accent colors that read well against its gradient — primary color is selected from the palette, not from a free color picker.
 - Theme controls include primary/accent color, text contrast, UI transparency, and UI blur strength.
-- Color picker and slider drags must stay smooth — they update CSS variables directly during drag and only commit to the store on release.
+- Sliders show their current value as a chip and use a custom track + thumb that picks up the active accent color; drags update CSS variables directly so they stay smooth, committing to the store only on release.
 - Text contrast must remain readable over light/dark themes and uploaded wallpapers.
 - Upload a local wallpaper image, compress it for browser storage, preview it, and allow removal without changing theme color.
 - When wallpaper is present, wallpaper becomes the visible page background while theme only controls system colors.
