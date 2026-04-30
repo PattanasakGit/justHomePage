@@ -58,3 +58,11 @@ Drag/drop performance notes:
 ## Vercel SQLite Caveat
 
 Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `DATABASE_URL` for production.
+
+## Widget Registry
+
+- All widget metadata lives in `src/components/widgets/widget-registry.ts`, keyed by `WidgetType`. Each entry exposes `{ label, defaultTitle, icon, defaultSize, defaultConfig }`.
+- `addWidget(type)` in the home store reads defaults from the registry — no per-type `if/else` branches outside the registry file.
+- Per-widget config types are declared in `WidgetConfigByType` (`PomodoroConfig`, `TodoConfig`, `WeatherConfig`, `BookmarkConfig`, plus the existing notes/quickLinks shapes). `HomeWidget.config` is loosened to `Record<string, unknown>` so persisted snapshots remain non-fragile; each widget component reads its slice via the typed helper.
+- Pomodoro logic lives in a pure `pomodoroReducer` (focus → break auto-switch on tick, reset preserves current mode). Todo mutations live in pure helpers (`addTodo`, `toggleTodo`, `removeTodo`, `clearDone`). Both have unit tests.
+- Persisted store version stays at 5 on this branch; migrating from v4 backfills the existing preference fields. New widget types only appear in newly created widgets, so legacy widget configs continue to work without a custom migration.

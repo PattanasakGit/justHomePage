@@ -20,3 +20,5 @@
 - Keep UI code-native; do not ship screenshot mockups as UI.
 - Keep local startup fast and resilient without network dependencies.
 - Document Vercel deployment caveats when touching persistence.
+- The widget registry (`src/components/widgets/widget-registry.ts`) is the single source of truth for widget metadata. Adding a new widget requires: (1) extend `WidgetType`, (2) add a config interface to `WidgetConfigByType`, (3) add a registry entry with `defaultConfig`, (4) add a body component file under `src/components/widgets/`, (5) extend the dispatch in `widget-frame.tsx`.
+- Pomodoro and todo logic live in `pomodoro-engine.ts` / `todo-engine.ts` so they can be unit tested without React.

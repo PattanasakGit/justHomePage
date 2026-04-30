@@ -25,3 +25,11 @@
 - Without a wallpaper, only the graphite theme switches to light text.
 - With a wallpaper, the uploaded image is sampled for average luminance; dark images (luminance < 0.55) flip to light text, bright images keep dark text.
 - Users can override auto by picking Dark or Light text explicitly in Settings → Theme.
+
+## Widgets — Expanded Set
+
+- The Workspace zone now exposes eight widget types in the Add menu: Clock, Date, Notes, Quick links, Pomodoro, Todo, Weather, Bookmark.
+- Pomodoro: tab between Focus / Break, primary action toggles play/pause, secondary action resets the current cycle. Auto-pauses when timer hits zero and pre-loads the opposite mode's full duration.
+- Todo: inline add input, click checkbox to mark done, hover/focus reveals delete; "Clear done" appears once at least one item is complete. Empty list shows a calm "Nothing on the list yet" placeholder.
+- Weather: uses the existing geolocation + `/api/local-weather` pipeline. Handles `blocked`/`error` states with a one-line hint instead of a fake reading.
+- Bookmark: in edit mode the tile becomes a tiny form (URL + caption); outside edit mode it's a launch tile that opens in a new tab with `noopener noreferrer`. Thumbnail and caption auto-fill from `/api/site-metadata`.

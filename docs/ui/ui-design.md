@@ -42,3 +42,10 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 - `--surface`, `--surface-strong`, `--panel`, `--tile` — glass surfaces; auto-flip from white-translucent to dark-translucent based on contrast. Opacity follows the user's transparency slider.
 - `--popup` — near-opaque (96%) surface for dropdowns and modal containers; ignores the transparency slider so popups stay readable on busy wallpapers.
 - Components must use these tokens instead of hardcoded `bg-white/*` or `text-white` so light/dark contrast both stay readable.
+
+## Widgets
+
+- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, size buttons, remove) and dispatches body rendering by type.
+- All widgets use theme tokens (`--accent`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` (the brand-icon plate exception still applies).
+- Pomodoro uses `tabular-nums` for the timer display so digit width stays steady.
+- Bookmark thumbnail uses a `--surface-strong` plate; falls back to a `FiBookmark` glyph when no metadata is fetched yet.
