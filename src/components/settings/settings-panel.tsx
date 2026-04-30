@@ -52,6 +52,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
   const setFont = useHomeStore((state) => state.setFont);
   const setSearchProvider = useHomeStore((state) => state.setSearchProvider);
   const setThemeControls = useHomeStore((state) => state.setThemeControls);
+  const resetZones = useHomeStore((state) => state.resetZones);
 
   const previewTheme = useCallback(
     (override: Partial<ThemeDraft>) => {
@@ -254,6 +255,19 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                   </SegmentButton>
                 ))}
               </div>
+            </div>
+            <div className="mt-6 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3">
+              <div className="text-sm font-semibold">Zone layout</div>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">
+                Restore Search, Favorites, and Workspace to their default order and visibility.
+              </p>
+              <button
+                type="button"
+                onClick={resetZones}
+                className="mt-3 inline-flex min-h-10 items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface-strong)] px-3 text-sm font-semibold transition hover:bg-[color:var(--accent-soft)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              >
+                Reset zone layout
+              </button>
             </div>
           </section>
         ) : null}

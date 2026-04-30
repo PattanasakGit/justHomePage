@@ -40,3 +40,10 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Accessible labels for icon-only controls.
 - Zustand for client interaction state.
 - SQLite/libSQL data boundary for future persistence.
+
+## Edit Mode — Zone Reorder
+
+- Users can reorder the three top-level zones (Search, Favorites, Workspace) and hide any zone in edit mode.
+- Hidden zones expose a "Show <zone>" affordance in the edit-mode header so they remain reachable.
+- "Reset zone layout" in Settings → Layout returns to defaults.
+- Persistence survives reload (Zustand persist v5 with migration from v4).
