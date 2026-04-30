@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface: rgba(255, 255, 255, 0.62);
+  --surface-strong: rgba(255, 255, 255, 0.88);
+  --panel: rgba(255, 255, 255, 0.82);
+  --tile: rgba(255, 255, 255, 0.68);
+  --ink: #17201b;
+  --muted: #66736c;
+  --border: rgba(31, 41, 35, 0.12);
+  --accent: #339b8e;
+  --accent-soft: rgba(51, 155, 142, 0.13);
+  --accent-warm: #e46f52;
+  --ui-blur: 14px;
+  --custom-background-image: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #f5f1ea;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  content: "";
+  background-image: var(--custom-background-image);
+  background-position: center;
+  background-size: cover;
+  opacity: 0.78;
+}
+
+body.has-wallpaper {
+  background: transparent;
+}
+
+body.has-wallpaper::before {
+  opacity: 1;
+}
+
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(2px);
+}
+
+body.has-wallpaper::after {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12)),
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.34), transparent 40%);
+  backdrop-filter: none;
+}
+
+body.contrast-light::after {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.18)),
+    radial-gradient(circle at 50% 22%, rgba(0, 0, 0, 0.22), transparent 42%);
+}
+
+body.contrast-light.has-wallpaper::after {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.18)),
+    radial-gradient(circle at 50% 22%, rgba(0, 0, 0, 0.24), transparent 42%);
+}
+
+.font-system {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.font-rounded {
+  font-family: "Sukhumvit Set", "SF Pro Rounded", "Nunito Sans", ui-rounded, "Thonburi", system-ui, sans-serif;
+}
+
+.font-editorial {
+  font-family: "New York", "Iowan Old Style", "Georgia", "Thonburi", serif;
+}
+
+.font-thaiSoft {
+  font-family: "Thonburi", "Sukhumvit Set", "Helvetica Neue", system-ui, sans-serif;
+}
+
+.font-mono {
+  font-family: "SF Mono", "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.ui-glass {
+  backdrop-filter: blur(var(--ui-blur));
+}
+
+.sortable-card {
+  contain: layout paint;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+body.dnd-active .sortable-card {
+  backdrop-filter: none;
+  transition: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.theme-linen {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(228, 111, 82, 0.18), transparent 26%),
+    radial-gradient(circle at 76% 18%, rgba(47, 143, 131, 0.18), transparent 34%),
+    linear-gradient(135deg, #eef6f2 0%, #f7f0e8 58%, #edf4ef 100%);
+}
+
+.theme-aurora {
+  background:
+    radial-gradient(circle at 25% 20%, rgba(76, 166, 139, 0.32), transparent 34%),
+    radial-gradient(circle at 70% 25%, rgba(225, 112, 85, 0.24), transparent 30%),
+    linear-gradient(140deg, #edf7f4, #f7efe8 52%, #e7f0ee);
+}
+
+.theme-sky {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(65, 137, 184, 0.20), transparent 30%),
+    radial-gradient(circle at 80% 30%, rgba(238, 147, 95, 0.20), transparent 28%),
+    linear-gradient(140deg, #edf6f8, #f9f2e9);
+}
+
+.theme-graphite {
+  --ink: #f7faf6;
+  --muted: #c1cbc4;
+  --border: rgba(255, 255, 255, 0.18);
+  background:
+    radial-gradient(circle at 15% 18%, rgba(77, 166, 150, 0.28), transparent 30%),
+    radial-gradient(circle at 82% 22%, rgba(226, 112, 82, 0.20), transparent 30%),
+    linear-gradient(140deg, #202620, #38413b 48%, #242a27);
+}
+
+.theme-graphite.has-wallpaper {
+  --surface: rgba(255, 255, 255, 0.48);
+  --surface-strong: rgba(255, 255, 255, 0.72);
+  --panel: rgba(255, 255, 255, 0.78);
+  --tile: rgba(255, 255, 255, 0.62);
+  --ink: #17201b;
+  --muted: #66736c;
+  --border: rgba(31, 41, 35, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
