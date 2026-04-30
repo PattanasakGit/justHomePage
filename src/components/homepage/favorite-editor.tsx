@@ -94,7 +94,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-white/65 px-4 text-[color:var(--ink)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+            className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-[color:var(--ink)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             placeholder="GitHub"
           />
         </label>
@@ -104,13 +104,13 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
           <input
             value={url}
             onChange={(event) => setUrl(event.target.value)}
-            className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-white/65 px-4 text-[color:var(--ink)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+            className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-[color:var(--ink)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             placeholder="https://github.com"
           />
         </label>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-white/45 px-3 py-2 text-sm text-[color:var(--muted)]">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--muted)]">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/75 shadow-inner">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/85 shadow-inner">
               {iconUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={iconUrl} alt="" className="h-6 w-6 rounded-md object-contain" />
@@ -130,7 +130,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
             <button
               type="button"
               onClick={() => setIconUrl(null)}
-              className="shrink-0 rounded-full px-3 py-1 font-semibold hover:bg-white/75 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              className="shrink-0 rounded-full px-3 py-1 font-semibold hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             >
               Custom
             </button>
@@ -153,7 +153,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
                     setIconUrl(null);
                   }}
                   className={`grid h-11 w-11 place-items-center rounded-2xl border transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-                    icon === choice ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--border)] bg-white/60"
+                    icon === choice ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--border)] bg-[color:var(--surface)]"
                   }`}
                 >
                   <Icon style={{ color: brand.color }} />

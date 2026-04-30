@@ -16,7 +16,16 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 
 - Icon buttons need accessible labels.
 - Brand icons use free icon sets exposed through `react-icons` / Simple Icons where available.
+- Brand icon plates always use a light off-white surface (independent of contrast mode) so colored and dark logos remain visible.
 - Cards are only for repeated tiles, widgets, and dialogs.
 - Avoid nested cards.
 - Use stable dimensions for tiles and widgets.
 - Background upload previews through the page background layer with a subtle blur/veil for contrast.
+
+## Theme Tokens
+
+- `--ink` — primary text color, flips with auto contrast.
+- `--ink-inverse` — opposite of `--ink`, used for text on `--ink` backgrounds (selected pills, segmented buttons).
+- `--muted` — secondary text, paired with `--ink`.
+- `--surface`, `--surface-strong`, `--panel`, `--tile` — glass surfaces; auto-flip from white-translucent to dark-translucent based on contrast.
+- Components must use these tokens instead of hardcoded `bg-white/*` or `text-white` so light/dark contrast both stay readable.

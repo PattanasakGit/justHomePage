@@ -48,7 +48,7 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
                 aria-label={`${option.label} ${widget.title}`}
                 onClick={() => resizeWidget(widget.id, option.size)}
                 className={`grid h-8 w-8 place-items-center rounded-full transition hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-                  widget.size === option.size ? "bg-[color:var(--ink)] text-[color:var(--surface-strong)]" : "text-[color:var(--muted)]"
+                  widget.size === option.size ? "bg-[color:var(--ink)] text-[color:var(--ink-inverse)]" : "text-[color:var(--muted)]"
                 }`}
               >
                 <option.icon />
@@ -72,7 +72,7 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
           aria-label="Note"
           value={widget.config.body ?? ""}
           onChange={(event) => updateWidgetConfig(widget.id, { body: event.target.value })}
-          className={`${scaleClass.textarea} w-full resize-none rounded-2xl border border-[color:var(--border)] bg-white/55 p-3 text-sm leading-6 text-[#17201b] outline-none focus:ring-2 focus:ring-[color:var(--accent)]`}
+          className={`${scaleClass.textarea} w-full resize-none rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3 text-sm leading-6 text-[color:var(--ink)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]`}
         />
       ) : null}
       {widget.type === "quickLinks" ? <QuickLinksWidget value={widget.config.links ?? "Docs,Tasks,Inbox"} /> : null}
@@ -126,7 +126,7 @@ function QuickLinksWidget({ value }: { value: string }) {
         <button
           key={link}
           type="button"
-          className="min-h-11 rounded-2xl bg-white/55 px-3 text-left text-sm font-medium text-[#17201b] hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          className="min-h-11 rounded-2xl bg-[color:var(--surface)] px-3 text-left text-sm font-medium text-[color:var(--ink)] hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
         >
           {link}
         </button>

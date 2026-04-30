@@ -10,9 +10,9 @@ describe("theme utilities", () => {
     });
   });
 
-  it("returns readable text pairs for light and dark contrast modes", () => {
-    expect(getReadableTextPair("light")).toEqual({ ink: "#f7faf6", muted: "#d8e0dc" });
-    expect(getReadableTextPair("dark")).toEqual({ ink: "#17201b", muted: "#66736c" });
+  it("returns readable text pairs with ink, muted, and inverse for light and dark contrast modes", () => {
+    expect(getReadableTextPair("light")).toEqual({ ink: "#f7faf6", muted: "#d8e0dc", inkInverse: "#17201b" });
+    expect(getReadableTextPair("dark")).toEqual({ ink: "#17201b", muted: "#66736c", inkInverse: "#f7faf6" });
   });
 });
 

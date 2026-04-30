@@ -142,7 +142,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                   value={preferences.accentColor}
                   onChange={(event) => setThemeControls({ accentColor: event.target.value })}
                   onInput={(event) => setThemeControls({ accentColor: event.currentTarget.value })}
-                  className="h-11 w-14 cursor-pointer rounded-2xl border border-[color:var(--border)] bg-white/60 p-1"
+                  className="h-11 w-14 cursor-pointer rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
                 />
                 <div className="flex flex-wrap gap-2">
                   {accentSwatches.map((color) => (
@@ -205,10 +205,10 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
           <section className="mt-7">
             <h3 className="text-sm font-semibold text-[color:var(--muted)]">Wallpaper image</h3>
             <div className="mt-3 grid gap-3">
-              <label className="grid min-h-28 cursor-pointer place-items-center rounded-[22px] border border-dashed border-[color:var(--border)] bg-white/45 p-4 text-sm font-semibold text-[color:var(--muted)] transition hover:bg-white/65">
+              <label className="grid min-h-28 cursor-pointer place-items-center rounded-[22px] border border-dashed border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-sm font-semibold text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)]">
                 <input type="file" accept="image/*" onChange={onUpload} className="sr-only" />
                 <span className="grid place-items-center gap-2 text-center">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/80 text-2xl text-[color:var(--accent)] shadow-inner">
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[color:var(--surface-strong)] text-2xl text-[color:var(--accent)] shadow-tile">
                     <FiUploadCloud />
                   </span>
                   {uploadStatus === "loading" ? "Preparing image..." : "Upload wallpaper"}
@@ -229,7 +229,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
               <button
                 type="button"
                 onClick={() => setWallpaperImage(null)}
-                className="mt-3 rounded-full bg-white/60 px-3 py-2 text-sm font-semibold text-[color:var(--muted)] hover:bg-white"
+                className="mt-3 rounded-full bg-[color:var(--surface)] px-3 py-2 text-sm font-semibold text-[color:var(--muted)] hover:bg-[color:var(--surface-strong)]"
               >
                 Remove wallpaper
               </button>
@@ -251,8 +251,8 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                     onClick={() => setSearchProvider(provider.id)}
                     className={`inline-flex min-h-12 items-center gap-2 rounded-2xl border px-3 text-left text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
                       preferences.searchProvider === provider.id
-                        ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-white"
-                        : "border-[color:var(--border)] bg-white/45"
+                        ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-[color:var(--ink-inverse)]"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)]"
                     }`}
                   >
                     <Icon style={{ color: preferences.searchProvider === provider.id ? "currentColor" : brand.color }} />
@@ -275,8 +275,8 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                   onClick={() => setFont(font.id)}
                   className={`flex min-h-12 items-center justify-between rounded-2xl border px-3 text-left transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
                     preferences.font === font.id
-                      ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-white"
-                      : "border-[color:var(--border)] bg-white/45"
+                      ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-[color:var(--ink-inverse)]"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)]"
                   }`}
                 >
                   <span className="text-sm font-semibold">{font.label}</span>
@@ -338,7 +338,7 @@ function SectionButton({ icon, title, detail, onClick }: { icon: ReactNode; titl
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-16 items-center gap-3 rounded-3xl border border-[color:var(--border)] bg-white/45 px-4 text-left transition hover:bg-white/65 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+      className="flex min-h-16 items-center gap-3 rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-left transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
     >
       <span className="grid h-10 w-10 place-items-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent)]">{icon}</span>
       <span className="min-w-0 flex-1">
@@ -356,7 +356,7 @@ function SegmentButton({ active, onClick, children }: { active: boolean; onClick
       type="button"
       onClick={onClick}
       className={`min-h-10 rounded-2xl border px-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-        active ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-[color:var(--surface-strong)]" : "border-[color:var(--border)] bg-white/45"
+        active ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-[color:var(--ink-inverse)]" : "border-[color:var(--border)] bg-[color:var(--surface)]"
       }`}
     >
       {children}

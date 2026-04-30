@@ -10,6 +10,7 @@
 - Use Bun for install, scripts, test, and dev server commands.
 - Components must not import database code.
 - Zustand stores must stay focused by interaction domain as the app grows.
+- Never hardcode `bg-white/*`, `text-white`, or hex text colors in components — use `--surface`, `--surface-strong`, `--panel`, `--tile`, `--ink`, `--ink-inverse`, `--muted` tokens so dark/light contrast stays readable. Brand icon plates are the documented exception (always light).
 
 ## Working Style
 

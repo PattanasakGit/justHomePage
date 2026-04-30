@@ -55,6 +55,7 @@ export function HomePage() {
     document.body.style.setProperty("--custom-background-image", preferences.wallpaperImage ? `url("${preferences.wallpaperImage}")` : "none");
     document.body.style.setProperty("--ink", textPair.ink);
     document.body.style.setProperty("--muted", textPair.muted);
+    document.body.style.setProperty("--ink-inverse", textPair.inkInverse);
     Object.entries(
       buildThemeVariables({
         accentColor: preferences.accentColor,
@@ -202,7 +203,7 @@ export function HomePage() {
                 onClick={openNewFavorite}
                 className="flex min-h-[94px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] p-3 text-center shadow-tile backdrop-blur transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               >
-                <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-white/65 text-2xl text-[color:var(--muted)]">
+                <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-[color:var(--surface-strong)] text-2xl text-[color:var(--muted)]">
                   <FiPlus />
                 </span>
                 <span className="text-[13px] font-semibold">Add</span>

@@ -58,7 +58,7 @@ export function SearchBar() {
         <button
           type="button"
           aria-label="Search settings"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-white/70 text-lg text-[color:var(--ink)] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-lg text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
         >
           <FiSliders />
         </button>
@@ -68,7 +68,7 @@ export function SearchBar() {
             aria-label="Choose search engine"
             aria-expanded={providerMenuOpen}
             onClick={() => setProviderMenuOpen((open) => !open)}
-            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full border border-[color:var(--border)] bg-white/75 px-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:px-5 sm:text-base"
+            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:px-5 sm:text-base"
           >
             <ProviderIcon style={{ color: providerBrand.color }} />
             <span className="hidden max-w-[118px] truncate sm:inline">{provider.label}</span>
@@ -99,8 +99,8 @@ export function SearchBar() {
                             }}
                             className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
                               item.id === providerId
-                                ? "bg-[color:var(--ink)] text-white"
-                                : "text-[color:var(--ink)] hover:bg-white/70"
+                                ? "bg-[color:var(--ink)] text-[color:var(--ink-inverse)]"
+                                : "text-[color:var(--ink)] hover:bg-[color:var(--surface)]"
                             }`}
                           >
                             <span className="inline-flex items-center gap-3">

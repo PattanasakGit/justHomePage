@@ -29,10 +29,10 @@ function rgba(hex: string, alpha: number) {
 
 export function getReadableTextPair(contrast: Exclude<ContrastMode, "auto">) {
   if (contrast === "light") {
-    return { ink: "#f7faf6", muted: "#d8e0dc" };
+    return { ink: "#f7faf6", muted: "#d8e0dc", inkInverse: "#17201b" };
   }
 
-  return { ink: "#17201b", muted: "#66736c" };
+  return { ink: "#17201b", muted: "#66736c", inkInverse: "#f7faf6" };
 }
 
 export function resolveContrast(

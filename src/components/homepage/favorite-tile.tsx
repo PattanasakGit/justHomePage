@@ -75,7 +75,7 @@ export const FavoriteTile = memo(function FavoriteTile({
         className={`flex h-full w-full ${size.card} flex-col items-center justify-center gap-2 rounded-[18px] p-3 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]`}
         aria-label={favorite.title}
       >
-        <span className={`grid ${size.icon} place-items-center bg-white/75 shadow-inner`}>
+        <span className={`grid ${size.icon} place-items-center bg-white/85 shadow-inner`}>
           {favorite.iconUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={favorite.iconUrl} alt="" className={`${size.iconInner} rounded-lg object-contain`} loading="lazy" />
@@ -93,7 +93,7 @@ export const FavoriteTile = memo(function FavoriteTile({
               type="button"
               aria-label={`Edit ${favorite.title}`}
               onClick={onEdit}
-              className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-[color:var(--muted)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              className="grid h-7 w-7 place-items-center rounded-full bg-[color:var(--surface-strong)] text-[color:var(--ink)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             >
               <FiEdit2 />
             </button>
@@ -101,7 +101,7 @@ export const FavoriteTile = memo(function FavoriteTile({
               type="button"
               aria-label={`Remove ${favorite.title}`}
               onClick={onRemove}
-              className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-[color:var(--muted)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              className="grid h-7 w-7 place-items-center rounded-full bg-[color:var(--surface-strong)] text-[color:var(--ink)] shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             >
               <FiTrash2 />
             </button>
