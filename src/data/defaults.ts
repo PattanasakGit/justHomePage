@@ -47,4 +47,6 @@ export const defaultPreferences: Preferences = {
   favoriteScale: "cozy",
   widgetScale: "cozy",
   editMode: false,
+  zoneOrder: ["search", "favorites", "workspace"],
+  zoneVisibility: { search: true, favorites: true, workspace: true },
 };
