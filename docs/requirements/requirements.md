@@ -40,3 +40,9 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Accessible labels for icon-only controls.
 - Zustand for client interaction state.
 - SQLite/libSQL data boundary for future persistence.
+
+## Favorites — Icon Picker
+
+- Custom-logo selection must scale beyond the brand-only set; the picker exposes search, category filters, and pagination.
+- All 32 brand icons remain available; ~60 curated neutral icons (Feather/`react-icons/fi`) are added across Productivity, Communication, Media, Money, Travel, and General.
+- Letter avatar remains the default fallback; selecting any icon clears the auto-detected `iconUrl`.

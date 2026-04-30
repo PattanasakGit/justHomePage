@@ -25,3 +25,12 @@
 - Without a wallpaper, only the graphite theme switches to light text.
 - With a wallpaper, the uploaded image is sampled for average luminance; dark images (luminance < 0.55) flip to light text, bright images keep dark text.
 - Users can override auto by picking Dark or Light text explicitly in Settings → Theme.
+
+## Favorites — Icon Picker
+
+- The favorite editor now uses a unified `IconPicker` instead of a flat 32-tile brand grid.
+- Layout: search input on top (auto-clears pagination when typing), category chips below (`All`, `Brand`, `Productivity`, `Communication`, `Media`, `Money`, `Travel`, `General`), then a paginated 7-column grid (page size 28).
+- The letter-avatar tile is always shown first when the active filter is "All" and the search query is empty or matches "letter avatar".
+- Brand icons render in their brand color; neutral icons render in `--ink` so they stay legible on every theme.
+- Empty state: "No icons match your search" when the query and category produce zero results.
+- The picker grid is capped at `max-h-[260px]` with internal scroll so the modal Save button stays visible on small viewports.

@@ -20,3 +20,5 @@
 - Keep UI code-native; do not ship screenshot mockups as UI.
 - Keep local startup fast and resilient without network dependencies.
 - Document Vercel deployment caveats when touching persistence.
+- The icon catalog is the single source of truth for picker entries (`src/components/icons/icon-catalog.ts`). When adding a brand icon, also add a matching `iconMap` entry in `brand-icon.tsx`. When adding a neutral icon, register the renderer in `neutralEntries`.
+- Neutral icons must render in `var(--ink)`, never a brand color.

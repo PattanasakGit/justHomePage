@@ -2,8 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FiRefreshCw, FiX } from "react-icons/fi";
-import { LETTER_ICON, getBrandIcon, iconChoices } from "@/components/icons/brand-icon";
-import { getLetterAvatar } from "@/lib/letter-avatar";
+import { LETTER_ICON } from "@/components/icons/brand-icon";
+import { IconPicker } from "@/components/icons/icon-picker";
 import type { Favorite, FavoriteInput } from "@/lib/types";
 import { inferTitleFromUrl, normalizeUrl } from "@/lib/url";
 
@@ -140,38 +140,15 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
 
         <div className="mt-5">
           <div className="text-sm font-semibold text-[color:var(--muted)]">Custom logo</div>
-          <div className="mt-2 grid grid-cols-7 gap-2">
-            {iconChoices.map((choice) => {
-              const brand = getBrandIcon(choice);
-              const Icon = brand.icon;
-              const isLetter = choice === LETTER_ICON;
-              const letterAvatar = isLetter ? getLetterAvatar(title || "Aa") : null;
-              return (
-                <button
-                  key={choice}
-                  type="button"
-                  aria-label={isLetter ? "Use letter avatar" : `Use ${brand.label} logo`}
-                  onClick={() => {
-                    setIcon(choice);
-                    setIconUrl(null);
-                  }}
-                  className={`grid h-11 w-11 place-items-center rounded-2xl border transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-                    icon === choice ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--border)] bg-[color:var(--surface)]"
-                  }`}
-                >
-                  {letterAvatar ? (
-                    <span
-                      className="grid h-7 w-7 place-items-center rounded-xl text-xs font-bold uppercase text-white"
-                      style={{ backgroundColor: letterAvatar.color }}
-                    >
-                      {letterAvatar.letter}
-                    </span>
-                  ) : (
-                    <Icon style={{ color: brand.color }} />
-                  )}
-                </button>
-              );
-            })}
+          <div className="mt-2">
+            <IconPicker
+              value={icon}
+              title={title}
+              onChange={(next) => {
+                setIcon(next);
+                setIconUrl(null);
+              }}
+            />
           </div>
         </div>
 

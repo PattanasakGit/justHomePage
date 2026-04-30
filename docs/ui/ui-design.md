@@ -42,3 +42,10 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 - `--surface`, `--surface-strong`, `--panel`, `--tile` — glass surfaces; auto-flip from white-translucent to dark-translucent based on contrast. Opacity follows the user's transparency slider.
 - `--popup` — near-opaque (96%) surface for dropdowns and modal containers; ignores the transparency slider so popups stay readable on busy wallpapers.
 - Components must use these tokens instead of hardcoded `bg-white/*` or `text-white` so light/dark contrast both stay readable.
+
+## Icon Picker
+
+- `IconPicker` lives at `src/components/icons/icon-picker.tsx`; the catalog at `src/components/icons/icon-catalog.ts`.
+- Brand icons keep their brand color; neutral icons use `var(--ink)` so they remain readable across light/dark themes.
+- Search field height is 40px; chip row is horizontally scrollable on overflow; grid is `grid-cols-7 gap-2` with 11×11 px tiles.
+- Container uses `--surface` background, internal grid scrolls at `max-h-[260px]` to protect modal layout.
