@@ -14,9 +14,12 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Add, edit, delete, and reorder favorite websites.
 - Default favorite website title/logo should come from website metadata when a URL is added.
 - Choose custom brand-style icons for favorite websites after metadata defaults are loaded.
+- A letter-avatar fallback is the default icon for new favorites — a colored circle with the first letter of the title, shown when no brand icon or metadata logo is selected.
 - Sync local timezone, location label, and current temperature in Celsius when browser location permission is granted.
 - Configurable theme color separated from wallpaper image.
+- Theme catalog covers warm, cool, dark, and neutral moods with at least a dozen distinct gradient bases.
 - Theme controls include primary/accent color, text contrast, UI transparency, and UI blur strength.
+- Color picker and slider drags must stay smooth — they update CSS variables directly during drag and only commit to the store on release.
 - Text contrast must remain readable over light/dark themes and uploaded wallpapers.
 - Upload a local wallpaper image, compress it for browser storage, preview it, and allow removal without changing theme color.
 - When wallpaper is present, wallpaper becomes the visible page background while theme only controls system colors.

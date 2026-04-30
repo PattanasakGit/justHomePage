@@ -76,7 +76,7 @@ export function SearchBar() {
           </button>
 
           {providerMenuOpen ? (
-            <div className="absolute right-0 top-[calc(100%+12px)] z-50 max-h-[420px] w-[min(82vw,360px)] overflow-y-auto rounded-[26px] border border-[color:var(--border)] bg-[color:var(--panel)] p-3 text-left shadow-panel backdrop-blur-2xl">
+            <div className="absolute right-0 top-[calc(100%+12px)] z-50 max-h-[420px] w-[min(82vw,360px)] overflow-y-auto rounded-[26px] border border-[color:var(--border)] bg-[color:var(--popup)] p-3 text-left shadow-panel">
               {(["Web", "AI", "Media"] as const).map((group) =>
                 groupedProviders[group]?.length ? (
                   <div key={group} className="py-1">

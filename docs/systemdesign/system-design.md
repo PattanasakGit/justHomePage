@@ -42,6 +42,8 @@ When `wallpaperImage` exists, the body receives `has-wallpaper`; CSS makes the u
 
 Theme controls are converted into CSS variables by `src/lib/theme.ts` and applied to `document.body`. Light contrast mode also switches glass surfaces to dark translucent panels so text does not disappear over bright backgrounds.
 
+Drag-heavy controls (color picker, transparency, blur sliders) bypass Zustand during the drag and write CSS variables directly to `document.body.style`. This avoids per-pixel `localStorage` writes from the persist middleware and keeps the picker smooth. The store commit only fires on pointer-up / change.
+
 Drag/drop performance notes:
 
 - Favorite and widget sort scopes use separate `SortableContext`s.

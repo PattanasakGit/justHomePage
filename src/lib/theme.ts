@@ -63,6 +63,7 @@ export function buildThemeVariables({ accentColor, uiOpacity, blur, contrast = "
   const strongOpacity = clamp(uiOpacity + 14, 50, 98) / 100;
   const tileOpacity = clamp(uiOpacity - 8, 34, 94) / 100;
   const glassRgb = contrast === "light" ? "18, 25, 22" : "255, 255, 255";
+  const popupRgb = contrast === "light" ? "22, 28, 25" : "252, 252, 252";
 
   return {
     "--accent": accentColor,
@@ -72,6 +73,7 @@ export function buildThemeVariables({ accentColor, uiOpacity, blur, contrast = "
     "--surface": `rgba(${glassRgb}, ${Math.max(0.3, opacity - 0.08).toFixed(2)})`,
     "--surface-strong": `rgba(${glassRgb}, ${strongOpacity.toFixed(2)})`,
     "--tile": `rgba(${glassRgb}, ${tileOpacity.toFixed(2)})`,
+    "--popup": `rgba(${popupRgb}, 0.96)`,
     "--ui-blur": `${clamp(blur, 0, 28)}px`,
   } as const;
 }

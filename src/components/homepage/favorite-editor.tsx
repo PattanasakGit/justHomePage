@@ -77,7 +77,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
       aria-modal="true"
       aria-label="Favorite editor"
     >
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-[28px] border border-[color:var(--border)] bg-[color:var(--panel)] p-5 shadow-panel">
+      <form onSubmit={onSubmit} className="w-full max-w-md rounded-[28px] border border-[color:var(--border)] bg-[color:var(--popup)] p-5 shadow-panel">
         <header className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{favorite ? "Edit favorite" : "Add favorite"}</h2>
           <button

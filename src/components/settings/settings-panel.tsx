@@ -108,7 +108,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
 
   return (
     <div className="fixed inset-0 z-50 bg-black/20 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Settings">
-      <div className="ml-auto flex h-full w-full max-w-[420px] flex-col overflow-y-auto rounded-[28px] border border-[color:var(--border)] bg-[color:var(--panel)] p-6 shadow-panel ui-glass">
+      <div className="ml-auto flex h-full w-full max-w-[420px] flex-col overflow-y-auto rounded-[28px] border border-[color:var(--border)] bg-[color:var(--popup)] p-6 shadow-panel">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {section !== "home" ? (

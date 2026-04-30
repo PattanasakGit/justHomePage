@@ -27,5 +27,6 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 - `--ink` — primary text color, flips with auto contrast.
 - `--ink-inverse` — opposite of `--ink`, used for text on `--ink` backgrounds (selected pills, segmented buttons).
 - `--muted` — secondary text, paired with `--ink`.
-- `--surface`, `--surface-strong`, `--panel`, `--tile` — glass surfaces; auto-flip from white-translucent to dark-translucent based on contrast.
+- `--surface`, `--surface-strong`, `--panel`, `--tile` — glass surfaces; auto-flip from white-translucent to dark-translucent based on contrast. Opacity follows the user's transparency slider.
+- `--popup` — near-opaque (96%) surface for dropdowns and modal containers; ignores the transparency slider so popups stay readable on busy wallpapers.
 - Components must use these tokens instead of hardcoded `bg-white/*` or `text-white` so light/dark contrast both stay readable.

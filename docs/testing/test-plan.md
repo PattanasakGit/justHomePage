@@ -10,7 +10,9 @@
 - Store action for theme controls: accent color, opacity, blur, contrast, favorite scale, and widget scale.
 - Theme utility CSS variable generation and readable text pairs.
 - Auto contrast resolution: dark wallpapers flip to light text, bright wallpapers keep dark text, missing luminance falls back to dark.
+- Auto contrast resolution treats every dark theme (graphite, ocean, forest, midnight, nebula, plum) the same way without a wallpaper.
 - Average luminance computation handles white, black, mid-tone, and empty pixel buffers.
+- Letter-avatar helper returns first character (uppercased), a fallback bullet for empty input, and a stable hex color per seed.
 - Website metadata extraction and favicon fallback.
 - Open-Meteo forecast URL generation with Celsius and automatic timezone.
 - Date and clock formatting helpers.
