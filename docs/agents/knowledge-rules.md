@@ -1,5 +1,7 @@
 # Agent Knowledge Rules
 
+> The team workflow lives at [team-flow.md](team-flow.md). Every user request goes through `project-owner` which dispatches the rest of the team.
+
 ## Iron Rules
 
 - Any feature or behavior change must update related docs in `docs/`.
