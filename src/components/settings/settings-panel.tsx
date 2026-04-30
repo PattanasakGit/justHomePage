@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, ReactNode, useState } from "react";
+import { ChangeEvent, ReactNode, useCallback, useState } from "react";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -18,8 +18,11 @@ import { getBrandIcon } from "@/components/icons/brand-icon";
 import { prepareWallpaperImage } from "@/lib/image-file";
 import { fontOptions } from "@/lib/fonts";
 import { searchProviders } from "@/lib/search";
-import type { BackgroundId, ContrastMode, UIScale } from "@/lib/types";
+import { buildThemeVariables, resolveContrast } from "@/lib/theme";
+import type { BackgroundId, ContrastMode, Preferences, UIScale } from "@/lib/types";
 import { useHomeStore } from "@/stores/home-store";
+
+type ThemeDraft = Pick<Preferences, "accentColor" | "uiOpacity" | "blur">;
 
 type SettingsSection = "home" | "theme" | "wallpaper" | "search" | "font" | "layout";
 
@@ -63,6 +66,26 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
   const setFont = useHomeStore((state) => state.setFont);
   const setSearchProvider = useHomeStore((state) => state.setSearchProvider);
   const setThemeControls = useHomeStore((state) => state.setThemeControls);
+
+  const previewTheme = useCallback(
+    (override: Partial<ThemeDraft>) => {
+      if (typeof document === "undefined") return;
+      const contrast = resolveContrast(
+        preferences.contrast,
+        Boolean(preferences.wallpaperImage),
+        preferences.theme,
+        preferences.wallpaperLuminance,
+      );
+      const vars = buildThemeVariables({
+        accentColor: override.accentColor ?? preferences.accentColor,
+        uiOpacity: override.uiOpacity ?? preferences.uiOpacity,
+        blur: override.blur ?? preferences.blur,
+        contrast,
+      });
+      Object.entries(vars).forEach(([key, value]) => document.body.style.setProperty(key, value));
+    },
+    [preferences],
+  );
 
   if (!open) return null;
 
@@ -153,7 +176,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                   aria-label="Primary theme color"
                   value={preferences.accentColor}
                   onChange={(event) => setThemeControls({ accentColor: event.target.value })}
-                  onInput={(event) => setThemeControls({ accentColor: event.currentTarget.value })}
+                  onInput={(event) => previewTheme({ accentColor: event.currentTarget.value })}
                   className="h-11 w-14 cursor-pointer rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-1"
                 />
                 <div className="flex flex-wrap gap-2">
@@ -184,7 +207,8 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                 max={96}
                 value={preferences.uiOpacity}
                 suffix="% solid"
-                onChange={(value) => setThemeControls({ uiOpacity: value })}
+                onPreview={(value) => previewTheme({ uiOpacity: value })}
+                onCommit={(value) => setThemeControls({ uiOpacity: value })}
               />
               <RangeField
                 label="Blur"
@@ -192,7 +216,8 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
                 max={28}
                 value={preferences.blur}
                 suffix="px"
-                onChange={(value) => setThemeControls({ blur: value })}
+                onPreview={(value) => previewTheme({ blur: value })}
+                onCommit={(value) => setThemeControls({ blur: value })}
               />
             </section>
 
@@ -382,29 +407,44 @@ function RangeField({
   max,
   value,
   suffix,
-  onChange,
+  onPreview,
+  onCommit,
 }: {
   label: string;
   min: number;
   max: number;
   value: number;
   suffix: string;
-  onChange: (value: number) => void;
+  onPreview: (value: number) => void;
+  onCommit: (value: number) => void;
 }) {
+  const [draft, setDraft] = useState(value);
+
+  if (draft !== value && document.activeElement?.getAttribute("aria-label") !== label) {
+    setDraft(value);
+  }
+
   return (
     <label className="mt-3 block text-sm font-semibold text-[color:var(--muted)]">
       {label}
       <input
         type="range"
+        aria-label={label}
         min={min}
         max={max}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        onInput={(event) => onChange(Number(event.currentTarget.value))}
+        value={draft}
+        onInput={(event) => {
+          const next = Number(event.currentTarget.value);
+          setDraft(next);
+          onPreview(next);
+        }}
+        onChange={(event) => onCommit(Number(event.target.value))}
+        onPointerUp={() => onCommit(draft)}
+        onKeyUp={() => onCommit(draft)}
         className="mt-2 w-full accent-[color:var(--accent)]"
       />
       <span className="text-xs">
-        {value}
+        {draft}
         {suffix}
       </span>
     </label>
