@@ -13,7 +13,23 @@ export type SearchProviderId =
   | "you"
   | "phind";
 
-export type BackgroundId = "linen" | "aurora" | "sky" | "graphite";
+export type BackgroundId =
+  | "linen"
+  | "aurora"
+  | "sky"
+  | "graphite"
+  | "sunset"
+  | "rose"
+  | "honey"
+  | "sand"
+  | "mint"
+  | "ocean"
+  | "lavender"
+  | "forest"
+  | "slate"
+  | "midnight"
+  | "nebula"
+  | "plum";
 
 export type FontId = "system" | "rounded" | "editorial" | "thaiSoft" | "mono";
 

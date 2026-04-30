@@ -22,10 +22,17 @@ describe("resolveContrast", () => {
     expect(resolveContrast("light", false, "graphite", 0.9)).toBe("light");
   });
 
-  it("auto + no wallpaper: graphite gets light text, others get dark", () => {
+  it("auto + no wallpaper: dark themes get light text, light themes get dark text", () => {
     expect(resolveContrast("auto", false, "graphite", null)).toBe("light");
+    expect(resolveContrast("auto", false, "ocean", null)).toBe("light");
+    expect(resolveContrast("auto", false, "forest", null)).toBe("light");
+    expect(resolveContrast("auto", false, "midnight", null)).toBe("light");
+    expect(resolveContrast("auto", false, "nebula", null)).toBe("light");
+    expect(resolveContrast("auto", false, "plum", null)).toBe("light");
     expect(resolveContrast("auto", false, "linen", null)).toBe("dark");
     expect(resolveContrast("auto", false, "sky", null)).toBe("dark");
+    expect(resolveContrast("auto", false, "sunset", null)).toBe("dark");
+    expect(resolveContrast("auto", false, "mint", null)).toBe("dark");
   });
 
   it("auto + dark wallpaper switches to light text", () => {

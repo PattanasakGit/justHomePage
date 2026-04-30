@@ -27,7 +27,19 @@ const backgrounds: Array<{ id: BackgroundId; label: string; preview: string }> =
   { id: "linen", label: "Linen", preview: "from-[#d8eee7] via-[#f8f2e9] to-[#efd9cf]" },
   { id: "aurora", label: "Aurora", preview: "from-[#b9ded4] via-[#eef5ef] to-[#e8b4a8]" },
   { id: "sky", label: "Sky", preview: "from-[#d9edf4] via-[#f7f3e8] to-[#cfe4dd]" },
+  { id: "sunset", label: "Sunset", preview: "from-[#ffe2cc] via-[#ffd1d6] to-[#f3c5d8]" },
+  { id: "rose", label: "Rose", preview: "from-[#fdf0ee] via-[#fbe1e8] to-[#f7d4e0]" },
+  { id: "honey", label: "Honey", preview: "from-[#fff3d6] via-[#ffe1ad] to-[#f7c98a]" },
+  { id: "sand", label: "Sand", preview: "from-[#f3ead8] via-[#ece1cc] to-[#e2d5bb]" },
+  { id: "mint", label: "Mint", preview: "from-[#e6f7ee] via-[#d3f0e0] to-[#c4e9d6]" },
+  { id: "lavender", label: "Lavender", preview: "from-[#ece4f7] via-[#ddd0ef] to-[#c9b9e5]" },
+  { id: "slate", label: "Slate", preview: "from-[#e6ebf0] via-[#dee5ec] to-[#ccd6e0]" },
   { id: "graphite", label: "Graphite", preview: "from-[#202620] via-[#43534d] to-[#242a27]" },
+  { id: "ocean", label: "Ocean", preview: "from-[#0f3a55] via-[#144a6a] to-[#0d2c44]" },
+  { id: "forest", label: "Forest", preview: "from-[#1f3027] via-[#2c4636] to-[#1a2620]" },
+  { id: "midnight", label: "Midnight", preview: "from-[#131634] via-[#1f2350] to-[#0e1024]" },
+  { id: "nebula", label: "Nebula", preview: "from-[#1c1238] via-[#2b1c4f] to-[#150e29]" },
+  { id: "plum", label: "Plum", preview: "from-[#2a1430] via-[#3e1d44] to-[#1c0e22]" },
 ];
 
 const accentSwatches = ["#339b8e", "#4f8cff", "#8b5cf6", "#ef6f53", "#f59e0b", "#111827"];
