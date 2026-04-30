@@ -6,6 +6,7 @@ import { createStore } from "zustand/vanilla";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { defaultFavorites, defaultPreferences, defaultWidgets } from "@/data/defaults";
+import { getWidgetMeta } from "@/components/widgets/widget-registry";
 import type {
   BackgroundId,
   Favorite,
@@ -29,7 +30,7 @@ export type HomeState = {
   addWidget: (type: WidgetType) => void;
   removeWidget: (id: string) => void;
   resizeWidget: (id: string, size: WidgetSize) => void;
-  updateWidgetConfig: (id: string, config: Record<string, string>) => void;
+  updateWidgetConfig: (id: string, config: Record<string, unknown>) => void;
   reorderWidgets: (activeId: string, overId: string) => void;
   setSearchProvider: (provider: SearchProviderId) => void;
   setTheme: (theme: BackgroundId) => void;
@@ -40,13 +41,6 @@ export type HomeState = {
 };
 
 const makeId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-
-const widgetTitles: Record<WidgetType, string> = {
-  clock: "Clock",
-  date: "Date",
-  notes: "Note",
-  quickLinks: "Quick links",
-};
 
 const createHomeState: StateCreator<HomeState> = (set) => ({
   favorites: defaultFavorites,
@@ -71,18 +65,21 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
       return oldIndex < 0 || newIndex < 0 ? state : { favorites: arrayMove(state.favorites, oldIndex, newIndex) };
     }),
   addWidget: (type) =>
-    set((state) => ({
-      widgets: [
-        ...state.widgets,
-        {
-          id: makeId("widget"),
-          type,
-          title: widgetTitles[type],
-          size: type === "notes" ? "max" : "middle",
-          config: type === "notes" ? { body: "" } : {},
-        },
-      ],
-    })),
+    set((state) => {
+      const meta = getWidgetMeta(type);
+      return {
+        widgets: [
+          ...state.widgets,
+          {
+            id: makeId("widget"),
+            type,
+            title: meta.defaultTitle,
+            size: meta.defaultSize,
+            config: { ...meta.defaultConfig },
+          },
+        ],
+      };
+    }),
   removeWidget: (id) =>
     set((state) => ({
       widgets: state.widgets.filter((widget) => widget.id !== id),
@@ -126,7 +123,7 @@ export function createHomeStore() {
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 4,
+    version: 5,
     migrate: (persisted) => {
       const state = persisted as Partial<HomeState> & {
         preferences?: Partial<Preferences> & {
