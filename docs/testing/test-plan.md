@@ -105,3 +105,23 @@ Manual matrix (must do before declaring polish work done):
 - Clock and date at `compact` AND `regular`: layouts must visibly differ — compact stacks vertically; regular adds a divider + right-column metadata.
 - Weather at `compact` AND `regular` including a forced error / blocked path: the footer must replace, not stack — body height stays constant.
 - On the `paper` theme with a forced near-white accent (`#ffff00`), hero digits across clock/date/weather/pomodoro must remain readable (rendered in `var(--ink)` instead of disappearing); accent decorations (ring, seconds bar, link dots, play button) keep the accent.
+
+### Pomodoro Size Fix (2026-05-01)
+
+Triggered by the bug "card focus timer มีปัญหาตอนปรับอิสระเป็นไซต์เล็ก" — at the smallest free-resize size the 88 px SVG ring overflowed `pomo-compact`, and `pomo-card` resized below 4×3 also collided. Brief: `docs/ux/explorations/2026-05-01-pomodoro-size-fix.md`.
+
+New tests (delta +9):
+
+- Unit (`src/components/widgets/widget-registry.test.ts`): `pomo-compact` clamps to `{ minW: 3, minH: 2, maxW: 5, maxH: 2 }`; `pomo-card` clamps to `{ minW: 4, minH: 3, maxW: 6, maxH: 4 }`; `pomo-wide` clamps to `{ minW: 6, minH: 3, maxW: 10, maxH: 4 }`. Each variant's default `(w, h)` falls inside its own clamps.
+- Component (`src/components/widgets/pomodoro-ring.test.tsx`): the universal parent-size guard. With a stubbed `ResizeObserver`, when the parent reports `min(w, h) − 24 < RING_SIZE_PX[size]` the component renders no `<svg>`; when the parent reports `min(w, h) − 24 ≥ RING_SIZE_PX[size]` the SVG renders. Covers `sm` (88) and `lg` (128).
+- Component (`src/components/widgets/widget-pomodoro.test.tsx`): per-variant body composition. `pomo-compact` renders no ring (`[data-testid='pomodoro-ring']` is null) and exposes a `role="progressbar"` element with `aria-valuemin=0`, `aria-valuemax=100`, and `aria-valuenow` matching the progress percent. `pomo-card` mounts a 88 px ring and a `[data-testid='pomo-controls']` right column whose className includes `grid-rows-[auto_auto]` and `justify-items-end`. `pomo-wide` mounts a 128 px ring and a `[data-testid='pomo-digits']` element with `text-4xl`.
+
+Manual matrix (must do before declaring this fix done):
+
+- Seed the workspace with one of each pomodoro variant (`pomo-compact`, `pomo-card`, `pomo-wide`). For each, verify visually:
+  - `pomo-compact`: tabs left + `text-3xl` digits right, 2 px accent progress bar, play/reset row underneath. NO ring overflow.
+  - `pomo-card`: 88 px ring left with digits inside, `focus/break` tabs above play/reset right.
+  - `pomo-wide`: 128 px ring left, `FOCUS` label + `text-4xl` digits centred, tabs above buttons right.
+- In edit mode, drag the resize corner: react-grid-layout must refuse to shrink below the variant's `minW × minH` (compact 3×2, card 4×3, wide 6×3) and refuse to grow past `maxW × maxH`.
+- `preview_console_logs` filtered to `error` returns no entries.
+- Theme matrix: `linen`, `paper`, `cyber`, `neonViolet`. Compact digits remain readable on every theme — on `paper` with a saturated near-white accent the digits must fall back to `var(--ink)` (verifies `useAccentTextColor`).

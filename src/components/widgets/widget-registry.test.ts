@@ -105,4 +105,40 @@ describe("widget registry", () => {
     const meta = getWidgetMeta("bookmark");
     expect(fallback.variant).toBe(meta.defaultVariant);
   });
+
+  // -----------------------------------------------------------------------
+  // Pomodoro size-fix (2026-05-01): per-variant clamps must guarantee that
+  // the body composition for each variant has the room it was designed for.
+  // See docs/ux/explorations/2026-05-01-pomodoro-size-fix.md.
+  // -----------------------------------------------------------------------
+  it("pomo-compact clamps allow 3..5 wide and exactly 2 tall", () => {
+    const variant = getWidgetMeta("pomodoro").variants.find((v) => v.id === "pomo-compact");
+    expect(variant).toBeDefined();
+    expect(variant).toMatchObject({ minW: 3, minH: 2, maxW: 5, maxH: 2 });
+    // default falls within clamps
+    expect(variant!.w).toBeGreaterThanOrEqual(variant!.minW);
+    expect(variant!.w).toBeLessThanOrEqual(variant!.maxW);
+    expect(variant!.h).toBeGreaterThanOrEqual(variant!.minH);
+    expect(variant!.h).toBeLessThanOrEqual(variant!.maxH);
+  });
+
+  it("pomo-card clamps allow 4..6 wide and 3..4 tall", () => {
+    const variant = getWidgetMeta("pomodoro").variants.find((v) => v.id === "pomo-card");
+    expect(variant).toBeDefined();
+    expect(variant).toMatchObject({ minW: 4, minH: 3, maxW: 6, maxH: 4 });
+    expect(variant!.w).toBeGreaterThanOrEqual(variant!.minW);
+    expect(variant!.w).toBeLessThanOrEqual(variant!.maxW);
+    expect(variant!.h).toBeGreaterThanOrEqual(variant!.minH);
+    expect(variant!.h).toBeLessThanOrEqual(variant!.maxH);
+  });
+
+  it("pomo-wide clamps allow 6..10 wide and 3..4 tall", () => {
+    const variant = getWidgetMeta("pomodoro").variants.find((v) => v.id === "pomo-wide");
+    expect(variant).toBeDefined();
+    expect(variant).toMatchObject({ minW: 6, minH: 3, maxW: 10, maxH: 4 });
+    expect(variant!.w).toBeGreaterThanOrEqual(variant!.minW);
+    expect(variant!.w).toBeLessThanOrEqual(variant!.maxW);
+    expect(variant!.h).toBeGreaterThanOrEqual(variant!.minH);
+    expect(variant!.h).toBeLessThanOrEqual(variant!.maxH);
+  });
 });

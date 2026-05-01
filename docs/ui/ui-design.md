@@ -111,7 +111,7 @@ The widget set follows the "Quiet OS" direction (calm, type-led, one accent touc
 - **date** — oversized accent day-number with subdued weekday + month.
 - **notes** — minimal textarea framed by a single accent focus bar at the top (`--accent-soft` idle, `--accent` while focused).
 - **quickLinks** — leading accent dot (HSL-rotated from `--accent`) before each link label.
-- **pomodoro** — circular SVG ring with explicit `size: sm | md | lg` (88 / 112 / 128 px); `stroke-dashoffset` animation; solid stroke for focus, dashed for break.
+- **pomodoro** — circular SVG ring with explicit `size: sm | md | lg` (88 / 112 / 128 px); `stroke-dashoffset` animation; solid stroke for focus, dashed for break. The ring self-guards via `ResizeObserver`: when `min(parentW, parentH) − 24 < RING_SIZE_PX[size]`, the component renders nothing so the host can drop in a flat fallback. The `pomo-compact` variant never renders the ring; it uses a 2 px accent progress bar instead. Body bodies that DO render the ring (`pomo-card`, `pomo-wide`) wrap it in an explicit `(ringSize + 24)` square slot so the ring observes a stable parent regardless of column auto-sizing.
 - **todo** — strip with a thin accent left edge (`--accent-soft` idle, `--accent` checked).
 - **weather** — accent-tinted temperature glyph; label `LOCAL WEATHER` uppercase; soft top-down `--accent-soft → transparent` gradient.
 - **bookmark** — light icon plate ring with caption underneath; in edit mode the inline form replaces the launch tile.
@@ -135,6 +135,7 @@ or replaces an in-place footer.
 | weather | regular | `grid-cols-[auto_1fr]`: temp+`C` hero on the left, condition / location stacked right. Same in-place footer rule applies; while error/blocked, the right-column secondary line collapses to keep total height stable. |
 | pomodoro | regular | `flex items-center gap-4`: 88 px ring left (`shrink-0`), digits inside the ring, controls (`ModeSwitch` over play/reset row) on the right, end-aligned. |
 | pomodoro | wide | `grid-cols-[auto_1fr_auto] items-center gap-6`: 128 px ring left, mode label + `text-4xl` time centred, mode pill over play/reset right. |
+| pomodoro | compact | `pomo-compact` variant only: tabs left + `text-3xl` digits right inline, full-width `h-[2px]` accent progress bar, play/reset row underneath. **No SVG ring.** |
 | quickLinks | regular | `grid-cols-1` scrollable list with `mask-image` fade on the bottom 16 px; ~4 visible at typical card height, scrolls beyond. |
 | quickLinks | wide | `grid-cols-2` scrollable grid with the same fade mask; ~8 visible, scrolls beyond. |
 

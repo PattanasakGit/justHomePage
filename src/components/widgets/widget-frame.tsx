@@ -319,7 +319,13 @@ function WidgetBody({
         />
       );
     case "pomodoro":
-      return <WidgetPomodoro size={density} config={widget.config as Partial<PomodoroConfig>} />;
+      return (
+        <WidgetPomodoro
+          variant={widget.variant}
+          size={density}
+          config={widget.config as Partial<PomodoroConfig>}
+        />
+      );
     case "todo": {
       const items = Array.isArray(widget.config.items) ? (widget.config.items as TodoItem[]) : [];
       return <WidgetTodo size={density} items={items} onChange={(next) => onConfigChange({ items: next })} />;

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { act } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { PomodoroRing, RING_GEOMETRY, computeRingDashOffset } from "@/components/widgets/pomodoro-ring";
 
@@ -68,5 +69,78 @@ describe("PomodoroRing", () => {
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.style.width).toBe("128px");
     expect(wrapper.style.height).toBe("128px");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Universal ring guard (2026-05-01 pomodoro size-fix):
+// PomodoroRing must measure its parent via ResizeObserver and render NOTHING
+// when min(parentW, parentH) - 24 < RING_SIZE_PX[size].
+// ---------------------------------------------------------------------------
+
+type ROCallback = (entries: Array<{ contentRect: { width: number; height: number } }>) => void;
+
+class MockResizeObserver {
+  static instances: MockResizeObserver[] = [];
+  cb: ROCallback;
+  target: Element | null = null;
+  constructor(cb: ROCallback) {
+    this.cb = cb;
+    MockResizeObserver.instances.push(this);
+  }
+  observe(target: Element) {
+    this.target = target;
+  }
+  unobserve() {}
+  disconnect() {}
+  trigger(width: number, height: number) {
+    this.cb([{ contentRect: { width, height } }]);
+  }
+}
+
+describe("PomodoroRing parent-size guard", () => {
+  beforeEach(() => {
+    MockResizeObserver.instances = [];
+    vi.stubGlobal("ResizeObserver", MockResizeObserver);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function renderInParent(size: "sm" | "md" | "lg") {
+    const utils = render(
+      <div data-testid="parent" style={{ width: 200, height: 200 }}>
+        <PomodoroRing secondsLeft={60} total={60} mode="focus" size={size} />
+      </div>,
+    );
+    return utils;
+  }
+
+  it("renders nothing when min(parentW, parentH) - 24 < 88 (size sm)", () => {
+    const { container } = renderInParent("sm");
+    // Drive the observer with an under-sized parent: 100x100 -> 100-24=76 < 88
+    act(() => {
+      MockResizeObserver.instances.forEach((obs) => obs.trigger(100, 100));
+    });
+    expect(container.querySelector("svg")).toBeNull();
+    expect(container.querySelector("[data-testid='pomodoro-ring']")).toBeNull();
+  });
+
+  it("renders the SVG when min(parentW, parentH) - 24 >= 88 (size sm)", () => {
+    const { container } = renderInParent("sm");
+    // 200x200 -> 200-24=176 >= 88
+    act(() => {
+      MockResizeObserver.instances.forEach((obs) => obs.trigger(200, 200));
+    });
+    expect(container.querySelector("svg")).not.toBeNull();
+  });
+
+  it("guards `lg` against parents narrower than 128 + 24px", () => {
+    const { container } = renderInParent("lg");
+    act(() => {
+      // 140x300 -> min=140, 140-24=116 < 128 -> hide
+      MockResizeObserver.instances.forEach((obs) => obs.trigger(140, 300));
+    });
+    expect(container.querySelector("svg")).toBeNull();
   });
 });
