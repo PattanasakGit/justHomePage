@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildThemeVariables, getReadableTextPair, resolveContrast } from "./theme";
+import { accentReadsOnLight, buildThemeVariables, getReadableTextPair, resolveContrast } from "./theme";
 
 describe("theme utilities", () => {
   it("builds ui CSS variables from color, transparency, and blur controls", () => {
@@ -47,5 +47,33 @@ describe("resolveContrast", () => {
 
   it("auto + wallpaper without luminance falls back to dark text", () => {
     expect(resolveContrast("auto", true, "linen", null)).toBe("dark");
+  });
+});
+
+describe("accentReadsOnLight", () => {
+  it("returns false for pure white (luminance 1, would disappear on paper)", () => {
+    expect(accentReadsOnLight("#ffffff")).toBe(false);
+  });
+
+  it("returns false for saturated yellow above the 0.85 luminance guard", () => {
+    // #ffff00 ~ luminance 0.93 — pure yellow, the worst case for "accent on paper".
+    expect(accentReadsOnLight("#ffff00")).toBe(false);
+  });
+
+  it("returns true for a mid-luminance accent (teal)", () => {
+    expect(accentReadsOnLight("#339b8e")).toBe(true);
+  });
+
+  it("returns true for dark accents", () => {
+    expect(accentReadsOnLight("#17201b")).toBe(true);
+  });
+
+  it("returns true on the boundary just below 0.85", () => {
+    // #d4d4d4 ~ luminance 0.68 — comfortably below the threshold.
+    expect(accentReadsOnLight("#d4d4d4")).toBe(true);
+  });
+
+  it("returns true for malformed input (safe default — keep accent)", () => {
+    expect(accentReadsOnLight("not-a-color")).toBe(true);
   });
 });

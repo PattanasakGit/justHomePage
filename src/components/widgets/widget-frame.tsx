@@ -109,14 +109,14 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
     <article
       ref={setArticleRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`sortable-card ${span} relative overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] ${widgetScalePadding[scale]} shadow-tile ui-glass transition ${
+      className={`sortable-card ${span} relative flex min-h-0 flex-col overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] ${widgetScalePadding[scale]} shadow-tile ui-glass transition ${
         isDragging ? "opacity-60" : ""
       }`}
       {...attributes}
       {...listeners}
       tabIndex={editMode ? 0 : -1}
     >
-      <header className="mb-3 flex items-center justify-between gap-2">
+      <header className="mb-3 flex shrink-0 items-center justify-between gap-2">
         <div
           className="flex min-w-0 items-center gap-2 text-sm font-semibold"
           aria-live="polite"
@@ -149,12 +149,14 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
           </div>
         ) : null}
       </header>
-      <WidgetBody
-        widget={widget}
-        scale={scale}
-        editMode={editMode}
-        onConfigChange={(patch) => updateWidgetConfig(widget.id, patch)}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <WidgetBody
+          widget={widget}
+          scale={scale}
+          editMode={editMode}
+          onConfigChange={(patch) => updateWidgetConfig(widget.id, patch)}
+        />
+      </div>
     </article>
   );
 });

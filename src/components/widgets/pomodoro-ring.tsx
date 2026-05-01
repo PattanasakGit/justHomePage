@@ -20,28 +20,36 @@ export const RING_GEOMETRY = {
   circumference: RING_CIRCUMFERENCE,
 };
 
-export type PomodoroRingScale = "compact" | "full";
+export type PomodoroRingSize = "sm" | "md" | "lg";
+
+const RING_SIZE_PX: Record<PomodoroRingSize, number> = {
+  sm: 88,
+  md: 112,
+  lg: 128,
+};
 
 /**
  * Quiet OS pomodoro ring — solid stroke for focus, dashed for break.
- * Animates `stroke-dashoffset` only.
+ * Animates `stroke-dashoffset` only. The displayed diameter is driven by
+ * the explicit `size` prop (sm = 88px / md = 112px / lg = 128px); the SVG
+ * geometry stays at {@link RING_GEOMETRY} so dash math remains stable.
  */
 export function PomodoroRing({
   secondsLeft,
   total,
   mode,
-  scale = "full",
+  size = "md",
   children,
 }: {
   secondsLeft: number;
   total: number;
   mode: PomodoroMode;
-  scale?: PomodoroRingScale;
+  size?: PomodoroRingSize;
   children?: React.ReactNode;
 }) {
   const offset = computeRingDashOffset(secondsLeft, total);
   const isBreak = mode === "break";
-  const display = scale === "compact" ? 96 : RING_DIAMETER;
+  const display = RING_SIZE_PX[size];
   return (
     <div
       className="relative grid place-items-center"

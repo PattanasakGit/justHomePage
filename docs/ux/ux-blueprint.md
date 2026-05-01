@@ -71,3 +71,25 @@ In edit mode the widget header carries two minimal controls instead of the previ
 ### Quiet OS visual direction
 
 The widget set follows the "Quiet OS" direction: each tile honest about its single job, with one disciplined accent touch. See `docs/ui/ui-design.md → Widgets → Quiet OS hero language` for the per-widget rules.
+
+### Per-size description (clock / date / weather / pomodoro / quickLinks)
+
+Sizing is composition, not stretch — the hero element identity stays
+constant across sizes; only typography scale, column count, and which
+secondary fields are visible change.
+
+- **Clock — compact**: HH:MM hero stacked over the accent seconds bar; bottom row carries short weekday + short timezone. No seconds string, no AM/PM tag.
+- **Clock — regular**: same hero, plus a right column with AM/PM tag, short weekday, and short timezone separated by a vertical hairline divider; the seconds bar still spans full width below.
+- **Date — compact**: oversized day digit (`text-6xl`) with a short weekday and short month underneath; weekday/month always truncate, never wrap.
+- **Date — regular**: day digit at `text-7xl` left, `border-l` divider, long weekday over long month + year right.
+- **Weather — compact**: four stacked lines (`LOCAL WEATHER` label → temp+`C` hero → condition → footer with map pin + location). Error / blocked replaces the footer line **in place** so the card never grows.
+- **Weather — regular**: temp + `C` hero left, stacked condition + location right (`grid-cols-[auto_1fr]`). Same in-place footer treatment for error / blocked.
+- **Pomodoro — regular**: 88 px ring on the left, controls (focus/break pill over play + reset) right-aligned. Time digits sit inside the ring at `text-base`.
+- **Pomodoro — wide**: 128 px ring on the left, mode label + large `text-4xl` time digits centred, focus/break pill over play + reset right. Three columns, each visually anchored.
+- **Quick links — regular**: 1-column scrollable list, ~4 visible, scrolls beyond with a 16 px bottom fade mask.
+- **Quick links — wide**: 2-column scrollable grid, ~8 visible, scrolls beyond with the same fade mask.
+
+The footer-replacement rule (Weather) and the scroll regions (Quick links)
+both rely on the global flex chain `flex h-full min-h-0 flex-col` →
+`flex-1 min-h-0 overflow-y-auto`. See `docs/agents/knowledge-rules.md` for
+the underlying rule.

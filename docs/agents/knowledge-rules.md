@@ -27,3 +27,5 @@
 - Neutral icons must render in `var(--ink)`, never a brand color.
 - The widget registry (`src/components/widgets/widget-registry.ts`) is the single source of truth for widget metadata. Adding a new widget requires: (1) extend `WidgetType`, (2) add a config interface to `WidgetConfigByType`, (3) add a registry entry with `defaultConfig`, `defaultSize`, and `allowedSizes`, (4) add a body component file under `src/components/widgets/`, (5) extend the dispatch in `widget-frame.tsx`.
 - Pomodoro and todo logic live in `pomodoro-engine.ts` / `todo-engine.ts` so they can be unit tested without React.
+- Any widget body that scrolls must use the `flex h-full min-h-0 flex-col` + `flex-1 min-h-0 overflow-y-auto` pattern; without `min-h-0` the parent's `overflow-hidden` clips children silently.
+- Hero numerals that paint with `--accent` (clock, date, weather temp, pomodoro digits) must pipe through `useAccentTextColor()` so they fall back to `var(--ink)` when `accentReadsOnLight(color)` is `false` — saturated yellow / near-white accents otherwise vanish on the `paper` theme.

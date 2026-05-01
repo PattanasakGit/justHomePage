@@ -42,4 +42,31 @@ describe("PomodoroRing", () => {
       5,
     );
   });
+
+  it("renders at 88px when size is `sm`", () => {
+    const { container } = render(
+      <PomodoroRing secondsLeft={60} total={60} mode="focus" size="sm" />,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.width).toBe("88px");
+    expect(wrapper.style.height).toBe("88px");
+  });
+
+  it("renders at 112px when size is `md`", () => {
+    const { container } = render(
+      <PomodoroRing secondsLeft={60} total={60} mode="focus" size="md" />,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.width).toBe("112px");
+    expect(wrapper.style.height).toBe("112px");
+  });
+
+  it("renders at 128px when size is `lg`", () => {
+    const { container } = render(
+      <PomodoroRing secondsLeft={60} total={60} mode="focus" size="lg" />,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.style.width).toBe("128px");
+    expect(wrapper.style.height).toBe("128px");
+  });
 });

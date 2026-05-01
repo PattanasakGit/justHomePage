@@ -88,7 +88,41 @@ The widget set follows the "Quiet OS" direction (calm, type-led, one accent touc
 - **date** — oversized accent day-number with subdued weekday + month.
 - **notes** — minimal textarea framed by a single accent focus bar at the top (`--accent-soft` idle, `--accent` while focused).
 - **quickLinks** — leading accent dot (HSL-rotated from `--accent`) before each link label.
-- **pomodoro** — 140-px SVG ring (96-px at `regular`); `stroke-dashoffset` animation; solid stroke for focus, dashed for break.
+- **pomodoro** — circular SVG ring with explicit `size: sm | md | lg` (88 / 112 / 128 px); `stroke-dashoffset` animation; solid stroke for focus, dashed for break.
 - **todo** — strip with a thin accent left edge (`--accent-soft` idle, `--accent` checked).
 - **weather** — accent-tinted temperature glyph; label `LOCAL WEATHER` uppercase; soft top-down `--accent-soft → transparent` gradient.
 - **bookmark** — light icon plate ring with caption underneath; in edit mode the inline form replaces the launch tile.
+
+### Per-size composition rules (clock / date / weather / pomodoro / quickLinks)
+
+Each widget body is laid out per `allowedSize` so content always fits the
+card. The frame's `article` is `flex flex-col min-h-0 overflow-hidden`; every
+body root uses `flex h-full min-h-0 flex-col` so internal scroll regions
+report finite height (see `docs/agents/knowledge-rules.md` for the global
+rule). Bodies never grow beyond the card; overflow becomes a scroll region
+or replaces an in-place footer.
+
+| widget | size | composition |
+|---|---|---|
+| clock | compact | HH:MM hero stacked over a 2 px accent seconds bar; bottom row carries short weekday + short timezone (e.g. `FRI · Bangkok`). No seconds string. |
+| clock | regular | `grid-cols-[1fr_auto_auto]` baseline grid: HH:MM hero left, vertical hairline divider, right column = AM/PM tag + short weekday + short timezone. Seconds bar spans the full width below. |
+| date | compact | Oversized day digit (`text-6xl`), short weekday (`text-[11px] uppercase`), short month. |
+| date | regular | `grid-cols-[auto_1fr]`: day digit (`text-7xl`) on the left, `border-l` divider, weekday (long) + month + year stacked right. |
+| weather | compact | 4 stacked lines: `LOCAL WEATHER` label, temp+`C` hero, condition word, footer. The footer slot (`data-testid="weather-footer"`) is **replaced in place** when blocked/error — never appended — so card height is constant. |
+| weather | regular | `grid-cols-[auto_1fr]`: temp+`C` hero on the left, condition / location stacked right. Same in-place footer rule applies; while error/blocked, the right-column secondary line collapses to keep total height stable. |
+| pomodoro | regular | `flex items-center gap-4`: 88 px ring left (`shrink-0`), digits inside the ring, controls (`ModeSwitch` over play/reset row) on the right, end-aligned. |
+| pomodoro | wide | `grid-cols-[auto_1fr_auto] items-center gap-6`: 128 px ring left, mode label + `text-4xl` time centred, mode pill over play/reset right. |
+| quickLinks | regular | `grid-cols-1` scrollable list with `mask-image` fade on the bottom 16 px; ~4 visible at typical card height, scrolls beyond. |
+| quickLinks | wide | `grid-cols-2` scrollable grid with the same fade mask; ~8 visible, scrolls beyond. |
+
+### Accent readability fallback for hero digits
+
+`accentReadsOnLight(color)` (in `src/lib/theme.ts`) returns `false` when an
+accent's relative luminance exceeds `0.85` (e.g. saturated yellow on the
+`paper` theme). Widgets that fill large numerals with the accent — clock
+HH:MM, date day-number, weather temp, pomodoro digits — pipe through
+`useAccentTextColor()` (in `src/hooks/use-accent-text-color.ts`), which
+swaps the inline `color` to `var(--ink)` whenever the active accent would
+disappear on a near-white surface. The accent still drives every other
+decoration (ring stroke, seconds bar, link dot, play button) so the theme
+remains visually present.

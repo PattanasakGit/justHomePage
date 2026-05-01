@@ -81,3 +81,23 @@
 - Unit (`src/components/widgets/pomodoro-ring.test.tsx`): `computeRingDashOffset` is 0 at full remaining, full circumference at 0, half at 50%; rendered SVG has the full circumference dasharray + zero offset for `focus`/`full-remaining`, `4 6` dasharray for `break` mode.
 - Unit (`src/stores/home-store.test.ts`): persist v5 → v6 migration maps `small → compact`, `middle → regular`, `max → wide`; values not in a widget's `allowedSizes` (e.g. notes + `wide`) fall back to that widget's `defaultSize`; unknown legacy strings also fall back. `resizeWidget` rejects out-of-allowed sizes (no-op).
 - Manual: enter edit mode → for each widget cycle through every allowed size; confirm the cycle button's icon swaps to match the current size; confirm overflow popover (`⋯`) shows `Remove` and dismisses on Escape / outside-click; confirm the cycle button is hidden when only one size is allowed (no widgets currently expose this case but the rule is enforced in `widget-frame.tsx`).
+
+### Widget size redesign (2026-05-01)
+
+Triggered by the bug "pomodoro/weather/date/clock/quickLinks render content that doesn't fit their card; some content is hidden because the card never scrolls". Fixed by propagating `min-h-0` down the flex chain (frame → body) so internal scroll regions stop being silently clipped, plus per-size composition rewrites for the five widgets.
+
+New tests (delta +15):
+
+- Unit (`src/lib/theme.test.ts`): `accentReadsOnLight` returns `false` for pure white, `false` for saturated yellow (`#ffff00`, luminance ≈ 0.93), `true` for mid-luminance teal, `true` for dark accents, `true` for `#d4d4d4` (just below the 0.85 threshold), `true` for malformed input (safe default).
+- Unit (`src/components/widgets/pomodoro-ring.test.tsx`): the explicit `size: 'sm' | 'md' | 'lg'` prop renders the wrapper at 88 / 112 / 128 px respectively (replaces the previous `scale: 'compact' | 'full'` enum).
+- Component (`src/components/widgets/widget-quick-links.test.tsx`): with 12 fake links at `wide`, the `[data-testid='quick-links-scroll']` element exists and has `overflow-y-auto` + `min-h-0` + `flex-1` classes (the actual fix verification); `wide` uses `grid-cols-2` and `regular` uses `grid-cols-1`; the body root carries the `flex h-full min-h-0 flex-col` chain.
+- Component (`src/components/widgets/widget-weather.test.tsx`): in `error` state exactly one element with `role="status"` renders and exactly one `data-testid='weather-footer'` exists (footer slot is replaced in place, not appended); same for `blocked`; the ready state has zero `role="status"` nodes and a single footer.
+
+Manual matrix (must do before declaring polish work done):
+
+- Add all five widgets (clock, date, weather, pomodoro, quickLinks). Cycle through every `allowedSize`. Theme matrix: `linen` (light), `cyber` (neon-dark), `paper` (high-luminance-accent edge case — set the accent to `#ffff00` to test the readability fallback). For each combination, capture a screenshot and read `preview_console_logs` (must be clean).
+- Pomodoro at `regular` AND `wide`: play + reset buttons must be clearly visible.
+- QuickLinks with 12 fake links at `regular` (1 col) AND `wide` (2 cols): scroll region's `scrollHeight > clientHeight` is checked via the preview eval; visually the bottom fade-mask exposes only the first ~4 / ~8 rows.
+- Clock and date at `compact` AND `regular`: layouts must visibly differ — compact stacks vertically; regular adds a divider + right-column metadata.
+- Weather at `compact` AND `regular` including a forced error / blocked path: the footer must replace, not stack — body height stays constant.
+- On the `paper` theme with a forced near-white accent (`#ffff00`), hero digits across clock/date/weather/pomodoro must remain readable (rendered in `var(--ink)` instead of disappearing); accent decorations (ring, seconds bar, link dots, play button) keep the accent.
