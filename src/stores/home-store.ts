@@ -42,6 +42,8 @@ export type HomeState = {
   compactWidgets: () => void;
   updateWidgetConfig: (id: string, config: Record<string, unknown>) => void;
   reorderWidgets: (activeId: string, overId: string) => void;
+  moveWidgetUp: (id: string) => void;
+  moveWidgetDown: (id: string) => void;
   setSearchProvider: (provider: SearchProviderId) => void;
   setTheme: (theme: BackgroundId) => void;
   setWallpaperImage: (wallpaperImage: string | null, wallpaperLuminance?: number | null) => void;
@@ -199,6 +201,41 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
       const oldIndex = state.widgets.findIndex((item) => item.id === activeId);
       const newIndex = state.widgets.findIndex((item) => item.id === overId);
       return oldIndex < 0 || newIndex < 0 ? state : { widgets: arrayMove(state.widgets, oldIndex, newIndex) };
+    }),
+  moveWidgetUp: (id) =>
+    set((state) => {
+      // sm-stack order: sort widgets by (y, then x).
+      const order = [...state.widgets].sort((a, b) =>
+        a.layout.y === b.layout.y ? a.layout.x - b.layout.x : a.layout.y - b.layout.y,
+      );
+      const idx = order.findIndex((w) => w.id === id);
+      if (idx <= 0) return state;
+      const target = order[idx];
+      const prev = order[idx - 1];
+      return {
+        widgets: state.widgets.map((widget) => {
+          if (widget.id === target.id) return { ...widget, layout: { ...widget.layout, y: prev.layout.y } };
+          if (widget.id === prev.id) return { ...widget, layout: { ...widget.layout, y: target.layout.y } };
+          return widget;
+        }),
+      };
+    }),
+  moveWidgetDown: (id) =>
+    set((state) => {
+      const order = [...state.widgets].sort((a, b) =>
+        a.layout.y === b.layout.y ? a.layout.x - b.layout.x : a.layout.y - b.layout.y,
+      );
+      const idx = order.findIndex((w) => w.id === id);
+      if (idx < 0 || idx >= order.length - 1) return state;
+      const target = order[idx];
+      const next = order[idx + 1];
+      return {
+        widgets: state.widgets.map((widget) => {
+          if (widget.id === target.id) return { ...widget, layout: { ...widget.layout, y: next.layout.y } };
+          if (widget.id === next.id) return { ...widget, layout: { ...widget.layout, y: target.layout.y } };
+          return widget;
+        }),
+      };
     }),
   setSearchProvider: (searchProvider) =>
     set((state) => ({ preferences: { ...state.preferences, searchProvider } })),

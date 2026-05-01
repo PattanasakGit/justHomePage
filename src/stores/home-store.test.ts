@@ -177,6 +177,61 @@ describe("home store", () => {
     expect(next.widgets[0].variant).toBe(meta.defaultVariant);
   });
 
+  it("moveWidgetUp swaps a widget with the previous in sm-stack order (sorted by y, then x)", () => {
+    const store = createHomeStore();
+    // Re-seed every default widget into a clean vertical stack so y-order is
+    // unambiguous, then move the middle one up.
+    const widgets = store.getState().widgets;
+    widgets.forEach((widget, i) => {
+      store.getState().setLayout(widget.id, { x: 0, y: i * 2, w: 2, h: 2 });
+    });
+    const ids = widgets.map((w) => w.id);
+    store.getState().moveWidgetUp(ids[2]);
+    const after = store.getState().widgets;
+    const second = after.find((w) => w.id === ids[1])!;
+    const third = after.find((w) => w.id === ids[2])!;
+    expect(third.layout.y).toBe(2);
+    expect(second.layout.y).toBe(4);
+  });
+
+  it("moveWidgetUp on the topmost widget is a no-op", () => {
+    const store = createHomeStore();
+    const widgets = store.getState().widgets;
+    widgets.forEach((widget, i) => {
+      store.getState().setLayout(widget.id, { x: 0, y: i * 2, w: 2, h: 2 });
+    });
+    const topId = widgets[0].id;
+    store.getState().moveWidgetUp(topId);
+    expect(store.getState().widgets.find((w) => w.id === topId)!.layout.y).toBe(0);
+  });
+
+  it("moveWidgetDown swaps a widget with the next in sm-stack order", () => {
+    const store = createHomeStore();
+    const widgets = store.getState().widgets;
+    widgets.forEach((widget, i) => {
+      store.getState().setLayout(widget.id, { x: 0, y: i * 2, w: 2, h: 2 });
+    });
+    const ids = widgets.map((w) => w.id);
+    store.getState().moveWidgetDown(ids[1]);
+    const after = store.getState().widgets;
+    const second = after.find((w) => w.id === ids[1])!;
+    const third = after.find((w) => w.id === ids[2])!;
+    expect(second.layout.y).toBe(4);
+    expect(third.layout.y).toBe(2);
+  });
+
+  it("moveWidgetDown on the bottom widget is a no-op", () => {
+    const store = createHomeStore();
+    const widgets = store.getState().widgets;
+    widgets.forEach((widget, i) => {
+      store.getState().setLayout(widget.id, { x: 0, y: i * 2, w: 2, h: 2 });
+    });
+    const lastId = widgets[widgets.length - 1].id;
+    const lastY = (widgets.length - 1) * 2;
+    store.getState().moveWidgetDown(lastId);
+    expect(store.getState().widgets.find((w) => w.id === lastId)!.layout.y).toBe(lastY);
+  });
+
   it("updates visual tuning preferences", () => {
     const store = createHomeStore();
     store.getState().setThemeControls({
