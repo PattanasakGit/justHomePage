@@ -16,6 +16,7 @@ import {
   FiSun,
   FiX,
 } from "react-icons/fi";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { SearchBar } from "@/components/search/search-bar";
 import { FavoriteTile } from "@/components/homepage/favorite-tile";
 import { FavoriteEditor } from "@/components/homepage/favorite-editor";
@@ -27,6 +28,7 @@ import type { Favorite, FavoriteInput, HomeWidget, WidgetType, ZoneId } from "@/
 import { useLocalEnvironment } from "@/hooks/use-local-environment";
 import { buildThemeVariables, getReadableTextPair, resolveContrast } from "@/lib/theme";
 import { widgetRegistry, getWidgetMeta } from "@/components/widgets/widget-registry";
+import { mobileH } from "@/lib/mobile-layout";
 
 const widgetOptions: Array<{ type: WidgetType; label: string }> = (Object.keys(widgetRegistry) as WidgetType[]).map(
   (type) => ({ type, label: widgetRegistry[type].label }),
@@ -88,6 +90,8 @@ export function HomePage() {
   const setZoneVisible = useHomeStore((state) => state.setZoneVisible);
   const setEditMode = useHomeStore((state) => state.setEditMode);
   const environment = useLocalEnvironment();
+  const isMobile = useMediaQuery("(max-width: 639.98px)");
+  const [addWidgetSheetOpen, setAddWidgetSheetOpen] = useState(false);
   const favoriteIds = useMemo(() => favorites.map((item) => item.id), [favorites]);
   const zoneSortableIds = useMemo(
     () => preferences.zoneOrder.map((zone) => `zone-${zone}`),
@@ -200,7 +204,7 @@ export function HomePage() {
 
   if (!isMounted) {
     return (
-      <main className="min-h-screen px-4 py-4 text-[color:var(--ink)] sm:px-6 lg:px-10">
+      <main className="min-h-screen px-3 py-3 text-[color:var(--ink)] sm:px-6 sm:py-4 lg:px-10">
         <header className="mx-auto flex w-full max-w-7xl items-center justify-between">
           <h1 className="text-lg font-semibold tracking-normal">justHomePage</h1>
         </header>
@@ -220,21 +224,25 @@ export function HomePage() {
   );
   let cursorY = 0;
   const smallLayout: Layout = sortedForMobile.map((widget) => {
-    const meta = getWidgetMeta(widget.type);
-    const variant = meta.variants.find((v) => v.id === widget.variant) ?? meta.variants[0];
-    const w = Math.min(COLS.sm, widget.layout.w);
+    // Force every mobile widget to a full-width strip; ignore the desktop
+    // variant width entirely. Row count is per-(type, variant) via `mobileH`.
+    const w = COLS.sm;
+    const h = mobileH(widget.type, widget.variant);
     const item = {
       i: widget.id,
       x: 0,
       y: cursorY,
       w,
-      h: widget.layout.h,
-      minW: variant.minW,
-      minH: variant.minH,
-      maxW: variant.maxW,
-      maxH: variant.maxH,
+      h,
+      // Strip the variant min/max — at <sm we own the box. Locking minW=4 also
+      // prevents the user (or any stray drag handler) from resizing below
+      // full-width even if the breakpoint flickers during a viewport change.
+      minW: COLS.sm,
+      minH: h,
+      maxW: COLS.sm,
+      maxH: h,
     };
-    cursorY += widget.layout.h;
+    cursorY += h;
     return item;
   });
 
@@ -255,23 +263,26 @@ export function HomePage() {
 
   const zoneContent: Record<ZoneId, React.ReactElement> = {
     search: (
-      <section className="mx-auto mt-[9vh] w-full max-w-4xl text-center">
-        <div className="mb-7 flex flex-col items-center justify-center gap-2 text-[color:var(--muted)]">
-          <div className="flex items-center gap-3 text-2xl font-semibold text-[color:var(--ink)]">
+      <section className="mx-auto mt-6 w-full max-w-4xl text-center sm:mt-[9vh]">
+        <div className="mb-5 flex flex-col items-center justify-center gap-2 text-[color:var(--muted)] sm:mb-7">
+          <div className="flex items-center gap-3 text-2xl font-semibold text-[color:var(--ink)] sm:text-3xl lg:text-4xl">
             <FiSun className="text-[#f5a623]" />
             {environment.greeting}
           </div>
-          <div className="flex items-center gap-4 text-sm">
+          {/* Stack vertically on mobile (date row, then temp + location row);
+              keep single inline row at ≥sm. */}
+          <div className="flex flex-col items-center gap-1 text-sm sm:flex-row sm:items-center sm:gap-4">
             <span>{environment.dateLabel}</span>
-            <span>•</span>
-            <span className="font-semibold text-[color:var(--accent-warm)]">
-              {environment.temperatureC === null ? "Syncing °C" : `${environment.temperatureC}°C`}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <FiMapPin />
-              {environment.locationLabel}
-            </span>
-            <span className="hidden sm:inline">{environment.timezone}</span>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="font-semibold text-[color:var(--accent-warm)]">
+                {environment.temperatureC === null ? "Syncing °C" : `${environment.temperatureC}°C`}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <FiMapPin />
+                {environment.locationLabel}
+              </span>
+              <span className="hidden sm:inline">{environment.timezone}</span>
+            </div>
           </div>
         </div>
         <SearchBar />
@@ -293,7 +304,7 @@ export function HomePage() {
           </button>
         </div>
         <SortableContext items={favoriteIds} strategy={rectSortingStrategy}>
-          <div aria-label="Favorite websites" className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div aria-label="Favorite websites" className="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-8">
             {favorites.map((favorite) => (
               <FavoriteTile
                 key={favorite.id}
@@ -307,7 +318,7 @@ export function HomePage() {
             <button
               type="button"
               onClick={openNewFavorite}
-              className="flex min-h-[94px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] p-3 text-center shadow-tile backdrop-blur transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              className="flex min-h-[94px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] p-3 text-center shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:shadow-tile"
             >
               <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-[color:var(--surface-strong)] text-2xl text-[color:var(--muted)]">
                 <FiPlus />
@@ -332,25 +343,42 @@ export function HomePage() {
                 onClick={() => compactWidgets()}
                 title="Compact layout — pack widgets to the top"
                 aria-label="Compact widget layout"
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-medium backdrop-blur transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-medium backdrop-blur transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
               >
                 <FiAlignJustify />
                 Compact
               </button>
-              {widgetOptions.map((option) => (
+              {isMobile ? (
                 <button
-                  key={option.type}
                   type="button"
-                  onClick={() => addWidget(option.type)}
-                  className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-medium backdrop-blur transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  onClick={() => setAddWidgetSheetOpen(true)}
+                  aria-label="Add widget"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-medium backdrop-blur transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
                 >
                   <FiPlus />
-                  {option.label}
+                  Add widget
                 </button>
-              ))}
+              ) : (
+                widgetOptions.map((option) => (
+                  <button
+                    key={option.type}
+                    type="button"
+                    onClick={() => addWidget(option.type)}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-medium backdrop-blur transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                  >
+                    <FiPlus />
+                    {option.label}
+                  </button>
+                ))
+              )}
             </div>
           ) : null}
         </div>
+        {preferences.editMode && breakpoint === "sm" ? (
+          <p className="mb-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-center text-xs text-[color:var(--muted)]">
+            Open on a larger screen to rearrange widgets.
+          </p>
+        ) : null}
         <div
           ref={workspaceRef}
           data-edit-mode={preferences.editMode ? "true" : "false"}
@@ -412,8 +440,8 @@ export function HomePage() {
           )}
         </div>
         {preferences.editMode && breakpoint === "sm" ? (
-          <p className="mt-2 text-center text-xs text-[color:var(--muted)]">
-            Open on a larger screen to rearrange widgets.
+          <p className="mt-2 text-center text-xs italic text-[color:var(--muted)]">
+            Workspace layout (drag/resize) is set on a larger screen.
           </p>
         ) : null}
       </section>
@@ -421,7 +449,7 @@ export function HomePage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-4 text-[color:var(--ink)] sm:px-6 lg:px-10">
+    <main className="min-h-screen px-3 py-3 text-[color:var(--ink)] sm:px-6 sm:py-4 lg:px-10">
       <div className="mx-auto flex min-h-[calc(100vh-32px)] w-full max-w-[1480px] flex-col">
         <header className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-semibold tracking-normal">justHomePage</h1>
@@ -496,6 +524,41 @@ export function HomePage() {
         onClose={() => setFavoriteEditorOpen(false)}
         onSave={saveFavorite}
       />
+      {addWidgetSheetOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add widget"
+          className="fixed inset-0 z-50 flex items-end bg-black/30 backdrop-blur-sm"
+          onClick={() => setAddWidgetSheetOpen(false)}
+        >
+          <div
+            className="w-full max-h-[88svh] overflow-y-auto rounded-t-[28px] border border-[color:var(--border)] bg-[color:var(--popup)] p-5 pb-[max(env(safe-area-inset-bottom),16px)] shadow-panel"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex justify-center pb-3 pt-1">
+              <span aria-hidden className="block h-1 w-9 rounded-full bg-[color:var(--muted)] opacity-50" />
+            </div>
+            <h2 className="mb-3 text-lg font-semibold">Add widget</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {widgetOptions.map((option) => (
+                <button
+                  key={option.type}
+                  type="button"
+                  onClick={() => {
+                    addWidget(option.type);
+                    setAddWidgetSheetOpen(false);
+                  }}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-semibold transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+                >
+                  <FiPlus />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

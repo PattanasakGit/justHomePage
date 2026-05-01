@@ -125,3 +125,40 @@ Manual matrix (must do before declaring this fix done):
 - In edit mode, drag the resize corner: react-grid-layout must refuse to shrink below the variant's `minW × minH` (compact 3×2, card 4×3, wide 6×3) and refuse to grow past `maxW × maxH`.
 - `preview_console_logs` filtered to `error` returns no entries.
 - Theme matrix: `linen`, `paper`, `cyber`, `neonViolet`. Compact digits remain readable on every theme — on `paper` with a saturated near-white accent the digits must fall back to `var(--ink)` (verifies `useAccentTextColor`).
+
+## Responsive polish (2026-05-01)
+
+Spec: [`docs/ux/specs/2026-05-01-responsive-polish.md`](../ux/specs/2026-05-01-responsive-polish.md), brief: [`docs/ux/explorations/2026-05-01-responsive-treatment.md`](../ux/explorations/2026-05-01-responsive-treatment.md).
+
+Unit / component tests (delta +16):
+
+- `src/hooks/use-media-query.test.ts` — initial value from `matchMedia`, updates on `change`, `false` when `window` is undefined / `matchMedia` is missing (SSR-safe), unsubscribes on unmount.
+- `src/stores/home-store.test.ts` — `moveWidgetUp` / `moveWidgetDown` swap y in sm-stack ordering (sorted by `(y, x)`); both are no-ops when the target is at the boundary.
+- `src/components/homepage/favorite-editor.test.tsx` — at `≥sm` the form has `max-w-md` and no full-screen marker; at `<sm` the form has `h-[100svh]` and the Save button sits inside a sticky footer with `pb-[max(env(safe-area-inset-bottom),12px)]`.
+- `src/components/settings/settings-panel.test.tsx` — at `≥sm` the panel container is right-anchored with `m-3` and `rounded-[28px]`; at `<sm` it's a bottom sheet with `inset-x-0 bottom-0`, `rounded-t-[28px]`, `max-h-[88svh]`, and a `[data-sheet-handle='true']` indicator.
+- `src/components/widgets/widget-frame.test.tsx` — at `<sm` the weather widget renders a `[data-mobile-weather='true']` body, the bookmark widget (with a URL set, not editing) renders a `[data-mobile-bookmark='true']` launch-row, the pomodoro widget renders the compact body (no ring, `role="progressbar"`) regardless of its variant, and todo + notes wrap their bodies in a `[data-mobile-cap='true']` container with `max-h-[40svh]`.
+
+Manual viewport matrix (must complete before sign-off):
+
+- **iPhone 13 (390 × 844)**: greeting `text-2xl`, search pill `min-h-[64px]`, no `FiSliders` button, provider chip icon-only, favorites grid 4-col, settings = bottom sheet with drag handle, favorite editor = full-screen with sticky save above the home indicator, workspace single-column with mobile widget bodies, edit-mode shows `↑ ↓` per widget header and a single "Add widget" trigger.
+- **iPad portrait (834 × 1194)**: favorites 6-col, settings is a right-anchored drawer with a 12 px (`m-3`) gap from the right edge, workspace 8-col grid with drag/resize enabled.
+- **MacBook (1440 × 900)** and **external display (1920 × 1080)**: visually identical to pre-responsive-polish builds (12-col workspace, full search pill, full inline tray of 8 widget chips in edit mode).
+- All viewports: `preview_console_logs` filtered to `error` returns no entries; horizontal scroll is absent at 320 × 568 too.
+
+## Mobile workspace strips (2026-05-01)
+
+Spec: [`docs/ux/explorations/2026-05-01-mobile-workspace-fix.md`](../ux/explorations/2026-05-01-mobile-workspace-fix.md). Triggered by Thai user report "widget ในมือถือออกมาดูไม่ได้เลย" — clock and date were rendering at half-width with hero digits clipped, the workspace `↑ ↓` row was eating the title, and the grid-paper backdrop was bleeding through on mobile.
+
+Unit / component tests (delta +33):
+
+- `src/lib/mobile-layout.test.ts` (+25) — `mobileH(type, variant)` pure helper. Locks the per-(type, variant) cell-height contract: clock/date/weather/bookmark → 1 (any variant), pomodoro/quickLinks → 2 (any variant), todo/notes → 4 (any variant). Defensive default ≥ 1 for unknown variant ids.
+- `src/components/widgets/widget-frame.test.tsx` (+2) — at `<sm` in edit mode the header has NO inline `↑` / `↓` buttons (`button[aria-label*="Move"]` returns 0); the overflow popover lists `Move up`, `Move down`, `Remove` as `[role="menuitem"]` items in that order.
+- `src/components/widgets/widget-clock.test.tsx` (+3, new file) — `isMobile` prop renders the `[data-testid="mobile-row"]` strip body and never emits `text-6xl`; desktop body keeps the hero scale.
+- `src/components/widgets/widget-date.test.tsx` (+3, new file) — same contract as clock.
+
+Manual viewport matrix (must complete before sign-off):
+
+- **iPhone 13 (390 × 844)**: every workspace `<article>` is full-width (`clientWidth ≈ 359` after 16 px page padding, `data-mobile-strip='true'`), `scrollHeight ≤ clientHeight + 1` (no clipping). Clock and date show `[data-testid="mobile-row"]` with `[FiClock] tz · HH:MM` / `[FiCalendar] weekday, month · DD`, hero digits at `text-3xl` are fully visible. Workspace zone background-image is `none` (grid-paper hidden). Each widget header in edit mode has 0 `button[aria-label*="Move"]`; opening the `⋯` popover reveals `Move up` / `Move down` / `Remove` as menuitems.
+- **iPad portrait (834 × 1194)** and **MacBook (1440 × 900)**: visually identical to the prior responsive-polish build — `mobileH` is only consulted in the `<sm` branch of `smallLayout`, so md/lg layouts keep `widget.layout.h` exactly as before.
+- Theme matrix: `linen` (light), `cyber` (dark neon), `paper` (light minimal). Strip text remains readable on all three.
+- `preview_console_logs` filtered to `error` returns no entries on every viewport.

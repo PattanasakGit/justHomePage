@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, ReactNode, useCallback, useState } from "react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -53,6 +54,7 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
   const setSearchProvider = useHomeStore((state) => state.setSearchProvider);
   const setThemeControls = useHomeStore((state) => state.setThemeControls);
   const resetZones = useHomeStore((state) => state.resetZones);
+  const isMobile = useMediaQuery("(max-width: 639.98px)");
 
   const previewTheme = useCallback(
     (override: Partial<ThemeDraft>) => {
@@ -93,9 +95,31 @@ export function SettingsPanel({ open, onClose }: { open: boolean; onClose: () =>
 
   const title = section === "home" ? "Settings" : sectionTitle[section];
 
+  // Backdrop class differs only by padding so the bottom sheet can sit edge-
+  // to-edge while the desktop drawer keeps a `m-3` gap.
+  const backdropClass = isMobile
+    ? "fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+    : "fixed inset-0 z-50 bg-black/20 backdrop-blur-sm";
+  const panelClass = isMobile
+    ? "fixed inset-x-0 bottom-0 flex max-h-[88svh] w-full flex-col overflow-y-auto rounded-t-[28px] border border-[color:var(--border)] bg-[color:var(--popup)] px-5 pt-2 pb-[max(env(safe-area-inset-bottom),16px)] shadow-panel"
+    : "fixed inset-y-0 right-0 m-3 flex w-full max-w-[420px] flex-col overflow-y-auto rounded-[28px] border border-[color:var(--border)] bg-[color:var(--popup)] p-6 shadow-panel";
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/20 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Settings">
-      <div className="ml-auto flex h-full w-full max-w-[420px] flex-col overflow-y-auto rounded-[28px] border border-[color:var(--border)] bg-[color:var(--popup)] p-6 shadow-panel">
+    <div className={backdropClass} role="dialog" aria-modal="true" aria-label="Settings" onClick={onClose}>
+      <div
+        data-settings-panel="true"
+        className={panelClass}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {isMobile ? (
+          <div className="flex justify-center pb-2 pt-1">
+            <span
+              data-sheet-handle="true"
+              aria-hidden
+              className="block h-1 w-9 rounded-full bg-[color:var(--muted)] opacity-50"
+            />
+          </div>
+        ) : null}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {section !== "home" ? (

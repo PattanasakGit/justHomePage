@@ -51,7 +51,7 @@ export const FavoriteTile = memo(function FavoriteTile({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`sortable-card group relative ${size.card} rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] text-center shadow-tile ui-glass transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-strong)] ${
+      className={`sortable-card group relative ${size.card} rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] text-center shadow-sm ui-glass transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-strong)] sm:shadow-tile ${
         isDragging ? "opacity-50" : ""
       }`}
       onPointerDown={(event) => {

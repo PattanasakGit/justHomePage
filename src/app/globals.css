@@ -205,6 +205,14 @@ body.dnd-active .sortable-card {
   background-size: 100% 100%;
 }
 
+/* Mobile (`<sm`): drag/resize is disabled, so the graph-paper backdrop is
+   pure visual noise. Strip it without touching the lg/md edit chrome. */
+@media (max-width: 639.98px) {
+  .workspace-grid--edit {
+    background-image: none;
+  }
+}
+
 /* Tone the grid paper down on neon themes (alpha clamp). */
 body.theme-neonCyan .workspace-grid--edit,
 body.theme-neonPink .workspace-grid--edit,
