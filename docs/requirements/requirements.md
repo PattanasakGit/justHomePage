@@ -47,3 +47,9 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Hidden zones expose a "Show <zone>" affordance in the edit-mode header so they remain reachable.
 - "Reset zone layout" in Settings → Layout returns to defaults.
 - Persistence survives reload (Zustand persist v5 with migration from v4).
+
+## Favorites — Icon Picker
+
+- Custom-logo selection must scale beyond the brand-only set; the picker exposes search, category filters, and pagination.
+- All 32 brand icons remain available; ~60 curated neutral icons (Feather/`react-icons/fi`) are added across Productivity, Communication, Media, Money, Travel, and General.
+- Letter avatar remains the default fallback; selecting any icon clears the auto-detected `iconUrl`.

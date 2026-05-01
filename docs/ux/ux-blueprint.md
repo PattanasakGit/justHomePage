@@ -33,3 +33,12 @@
 - Hiding a zone keeps it discoverable: an edit-mode header strip lists every hidden zone with a one-tap "Show <zone>" button. Outside edit mode, hidden zones are not rendered.
 - Settings → Layout exposes a "Reset zone layout" action that restores `["search","favorites","workspace"]` with all three visible.
 - Keyboard reorder uses dnd-kit defaults: focus the drag handle, Space to lift, arrow keys to move, Space to drop.
+
+## Favorites — Icon Picker
+
+- The favorite editor now uses a unified `IconPicker` instead of a flat 32-tile brand grid.
+- Layout: search input on top (auto-clears pagination when typing), category chips below (`All`, `Brand`, `Productivity`, `Communication`, `Media`, `Money`, `Travel`, `General`), then a paginated 7-column grid (page size 28).
+- The letter-avatar tile is always shown first when the active filter is "All" and the search query is empty or matches "letter avatar".
+- Brand icons render in their brand color; neutral icons render in `--ink` so they stay legible on every theme.
+- Empty state: "No icons match your search" when the query and category produce zero results.
+- The picker grid is capped at `max-h-[260px]` with internal scroll so the modal Save button stays visible on small viewports.

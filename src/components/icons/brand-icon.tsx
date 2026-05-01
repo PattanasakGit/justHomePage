@@ -39,7 +39,8 @@ import {
   SiYoutube,
 } from "react-icons/si";
 
-export const LETTER_ICON = "letter";
+import { LETTER_ICON } from "@/components/icons/icon-catalog";
+export { LETTER_ICON };
 
 export const iconChoices = [
   LETTER_ICON,
@@ -124,6 +125,13 @@ const iconMap: Record<string, { icon: IconType; color: string; label: string }> 
   pinterest: { icon: SiPinterest, color: "#e60023", label: "Pinterest" },
 };
 
+// Imported lazily inside getBrandIcon to avoid a hard dependency cycle if catalog grows.
+import { neutralIconMap } from "@/components/icons/icon-catalog";
+
 export function getBrandIcon(name: string) {
-  return iconMap[name] ?? iconMap.globe;
+  if (iconMap[name]) return iconMap[name];
+  if (neutralIconMap[name]) {
+    return { icon: neutralIconMap[name], color: "currentColor", label: name };
+  }
+  return iconMap.globe;
 }

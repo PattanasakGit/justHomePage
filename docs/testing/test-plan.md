@@ -61,3 +61,9 @@
 - Unit (`src/stores/home-store-zones.test.ts`): default order, default visibility, `setZoneOrder`, `setZoneVisible`, `reorderZones` (with `zone-` prefix handling), `resetZones`.
 - Component (`src/components/homepage/sortable-zone.test.tsx`): edit-mode chrome (drag handle + eye toggle), non-edit-mode passthrough, toggle callback, "Show" vs "Hide" label.
 - Manual e2e (browser smoke): enter edit mode → reorder Workspace above Favorites → reload → order persists. Hide Search → header chip "Show Search" appears → click → restored. Settings → Layout → Reset zone layout → defaults return.
+
+## Favorites Icon Picker
+
+- Unit (`src/components/icons/icon-catalog.test.ts`): unique ids, every entry has at least one keyword, `LETTER_ICON` first, `getBrandIcon` returns a renderer for every entry, `getCatalogByCategory` filters, `searchCatalog` matches by label and keyword, empty query returns the full catalog, neutral icon set is non-trivial.
+- Component (`src/components/icons/icon-picker.test.tsx`): search filters, category chip filters, selection callback, empty-state message.
+- Manual e2e: open favorite editor → search "mail" → select Mail → save → tile renders the mail icon. Repeat with a brand icon (Spotify) and verify brand color. Mobile viewport: picker keeps Save button reachable.
