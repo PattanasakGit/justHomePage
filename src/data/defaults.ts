@@ -16,20 +16,36 @@ export const defaultFavorites: Favorite[] = [
 ];
 
 export const defaultWidgets: HomeWidget[] = [
-  { id: "widget-clock", type: "clock", title: "Bangkok", size: "compact", config: {} },
-  { id: "widget-date", type: "date", title: "Today", size: "compact", config: {} },
+  {
+    id: "widget-clock",
+    type: "clock",
+    title: "Bangkok",
+    variant: "clock-square",
+    layout: { x: 0, y: 0, w: 2, h: 2 },
+    config: {},
+  },
+  {
+    id: "widget-date",
+    type: "date",
+    title: "Today",
+    variant: "date-square",
+    layout: { x: 2, y: 0, w: 2, h: 2 },
+    config: {},
+  },
   {
     id: "widget-note",
     type: "notes",
     title: "Scratch note",
-    size: "tall",
+    variant: "notes-pad",
+    layout: { x: 4, y: 0, w: 4, h: 4 },
     config: { body: "Drop a thought. Autosaves locally." },
   },
   {
     id: "widget-links",
     type: "quickLinks",
     title: "Focus",
-    size: "regular",
+    variant: "links-row",
+    layout: { x: 8, y: 0, w: 4, h: 2 },
     config: { links: "Docs,Tasks,Inbox" },
   },
 ];

@@ -23,7 +23,7 @@ bun run build
 
 - Large multi-provider search with shortcuts such as `gh query`, `yt query`, and `d query`.
 - Favorite websites as compact draggable tiles. Custom logo picker covers brand icons, ~60 neutral icons, and a letter-avatar fallback (search + categories + pagination).
-- Workspace widgets: clock, date, notes, quick links, pomodoro, todo, weather, bookmark — all drag-and-drop.
+- Workspace widgets: clock, date, notes, quick links, pomodoro, todo, weather, bookmark — free-placed on a 12-col grid (drag the header, resize from the corner). Each widget exposes a curated variants list (e.g. clock: square / banner / display) you pick from the `⋯` menu.
 - Edit mode lets you reorder and hide the three top-level zones (Search / Favorites / Workspace).
 - 28 theme bases grouped by Light/Dark and tagged by style; per-theme curated accent palette and themed range sliders.
 - Auto text contrast samples wallpaper luminance and flips text color when needed.

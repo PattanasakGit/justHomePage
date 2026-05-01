@@ -14,8 +14,9 @@
 - Zustand stores must stay focused by interaction domain as the app grows.
 - Never hardcode `bg-white/*`, `text-white`, or hex text colors in components — use `--surface`, `--surface-strong`, `--panel`, `--tile`, `--ink`, `--ink-inverse`, `--muted` tokens so dark/light contrast stays readable. Brand icon plates are the documented exception (always light).
 - DnD ids are namespaced by domain: `zone-…`, `fav…`, `widget…`. The single `DndContext` in `home-page.tsx` routes drag events by prefix; never reuse a prefix for a different domain.
-- Persisted store schema lives at version 6; bumping it requires a migration that backfills new fields with defaults so older snapshots still load.
-- Widget sizes are per-type via `allowedSizes`; never assume the global `WidgetSize` enum exhaustively applies to every widget. Always clamp through the registry (e.g. via `resolveWidgetSize`) before persisting or applying a size.
+- Persisted store schema lives at version 7; bumping it requires a migration that backfills new fields with defaults so older snapshots still load. v6 → v7 maps the legacy `size` enum onto the per-type `WidgetVariantSpec` registry via `legacySizeToVariantSpec`, then auto-packs to remove overlaps (`autoPack` in `home-store.ts`).
+- `WidgetSize` is **retired** as a layout vocabulary; it survives only as a `@deprecated` typing aid for the v7 migration. New code uses `WidgetVariant` (string id, validated by the registry) plus `WidgetLayout = {x, y, w, h}` on a 12-col grid.
+- The widget header is the **react-grid-layout drag handle** (`.widget-drag-handle` class). Body content (textareas, buttons, todo rows) must remain pointer-interactive. Buttons inside the header (`⋯` overflow trigger, etc.) must `event.stopPropagation()` on `onPointerDown`/`onMouseDown` so RGL doesn't capture the click; RGL's `dragConfig.cancel: "button, [role='menu']"` further excludes them.
 
 ## Working Style
 
@@ -25,7 +26,7 @@
 - Document Vercel deployment caveats when touching persistence.
 - The icon catalog is the single source of truth for picker entries (`src/components/icons/icon-catalog.ts`). When adding a brand icon, also add a matching `iconMap` entry in `brand-icon.tsx`. When adding a neutral icon, register the renderer in `neutralEntries`.
 - Neutral icons must render in `var(--ink)`, never a brand color.
-- The widget registry (`src/components/widgets/widget-registry.ts`) is the single source of truth for widget metadata. Adding a new widget requires: (1) extend `WidgetType`, (2) add a config interface to `WidgetConfigByType`, (3) add a registry entry with `defaultConfig`, `defaultSize`, and `allowedSizes`, (4) add a body component file under `src/components/widgets/`, (5) extend the dispatch in `widget-frame.tsx`.
+- The widget registry (`src/components/widgets/widget-registry.ts`) is the single source of truth for widget metadata. Adding a new widget requires: (1) extend `WidgetType`, (2) add a config interface to `WidgetConfigByType`, (3) add a registry entry with `defaultConfig`, `defaultVariant`, and a `variants: WidgetVariantSpec[]` list (≥3 entries, default ∈ variants, min ≤ default ≤ max for both axes), (4) add a body component file under `src/components/widgets/`, (5) extend the dispatch in `widget-frame.tsx`, (6) extend `legacySizeToVariant` mapping for the new type so v6 snapshots still migrate cleanly.
 - Pomodoro and todo logic live in `pomodoro-engine.ts` / `todo-engine.ts` so they can be unit tested without React.
 - Any widget body that scrolls must use the `flex h-full min-h-0 flex-col` + `flex-1 min-h-0 overflow-y-auto` pattern; without `min-h-0` the parent's `overflow-hidden` clips children silently.
 - Every widget body's outermost wrapper is `flex h-full min-h-0 flex-col overflow-hidden` (or the equivalent for grid roots). Even bodies that do not scroll keep `min-h-0` so the chain stays consistent — that's how the article's `overflow-hidden` stops silently eating overflow.

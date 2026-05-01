@@ -26,7 +26,9 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - When wallpaper is present, wallpaper becomes the visible page background while theme only controls system colors.
 - Provide five font styles users can switch from settings.
 - Favorite tiles and workspace widgets can be resized independently.
-- Draggable widget workspace.
+- Draggable widget workspace on a fine 12-col grid (8 on tablet, 4 on mobile single-column auto-stack). Widgets are free-placed by `{x, y, w, h}` cells; corner-resize and header-drag work in edit mode on `lg`/`md`.
+- Each widget exposes a curated **variants** list (e.g. clock: square 2×2 / banner 4×1 / display 4×3); the user picks one from the `⋯` overflow popover, which writes the variant id and its `{w, h}` to the widget. Min/max clamps come from the variant.
+- Edit mode shows a Compact button in the workspace header that vertically packs the layout. Removing a widget never auto-reflows the others.
 - Add and remove widgets.
 - Clock, date, notes, and quick links widgets.
 - Responsive layout for desktop and mobile.

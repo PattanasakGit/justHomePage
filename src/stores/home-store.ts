@@ -6,7 +6,11 @@ import { createStore } from "zustand/vanilla";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { defaultFavorites, defaultPreferences, defaultWidgets } from "@/data/defaults";
-import { getWidgetMeta, resolveWidgetSize } from "@/components/widgets/widget-registry";
+import {
+  getWidgetMeta,
+  legacySizeToVariantSpec,
+  resolveVariant,
+} from "@/components/widgets/widget-registry";
 import type {
   BackgroundId,
   Favorite,
@@ -15,10 +19,12 @@ import type {
   HomeWidget,
   Preferences,
   SearchProviderId,
-  WidgetSize,
+  WidgetLayout,
   WidgetType,
   ZoneId,
 } from "@/lib/types";
+
+const GRID_COLS = 12;
 
 export type HomeState = {
   favorites: Favorite[];
@@ -30,7 +36,10 @@ export type HomeState = {
   reorderFavorites: (activeId: string, overId: string) => void;
   addWidget: (type: WidgetType) => void;
   removeWidget: (id: string) => void;
-  resizeWidget: (id: string, size: WidgetSize) => void;
+  setVariant: (id: string, variant: string) => void;
+  setLayout: (id: string, layout: WidgetLayout) => void;
+  setLayouts: (next: Array<{ id: string; layout: WidgetLayout }>) => void;
+  compactWidgets: () => void;
   updateWidgetConfig: (id: string, config: Record<string, unknown>) => void;
   reorderWidgets: (activeId: string, overId: string) => void;
   setSearchProvider: (provider: SearchProviderId) => void;
@@ -46,6 +55,54 @@ export type HomeState = {
 };
 
 const makeId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+function rectsOverlap(a: WidgetLayout, b: WidgetLayout): boolean {
+  return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+}
+
+/** First-fit top-left placement on the 12-col grid (left→right, top→bottom). */
+function firstFitPlacement(occupied: WidgetLayout[], w: number, h: number, cols = GRID_COLS): { x: number; y: number } {
+  const width = Math.min(Math.max(1, w), cols);
+  for (let y = 0; y < 256; y++) {
+    for (let x = 0; x + width <= cols; x++) {
+      const candidate: WidgetLayout = { x, y, w: width, h };
+      if (!occupied.some((o) => rectsOverlap(o, candidate))) {
+        return { x, y };
+      }
+    }
+  }
+  return { x: 0, y: 0 };
+}
+
+/** Vertically compact: keep ordering & x; pack each widget upward. */
+function compactLayouts(widgets: HomeWidget[]): HomeWidget[] {
+  const placed: WidgetLayout[] = [];
+  return widgets.map((widget) => {
+    const w = Math.min(widget.layout.w, GRID_COLS);
+    const x = Math.min(widget.layout.x, GRID_COLS - w);
+    let y = 0;
+    while (placed.some((p) => rectsOverlap(p, { x, y, w, h: widget.layout.h }))) y++;
+    const next: WidgetLayout = { x, y, w, h: widget.layout.h };
+    placed.push(next);
+    return { ...widget, layout: next };
+  });
+}
+
+/**
+ * Auto-pack: walk widgets in array order; place each at the lowest free `(x, y)`.
+ * Preserves array order which mirrors the user's vertical reading order.
+ */
+function autoPack(widgets: HomeWidget[]): HomeWidget[] {
+  const placed: WidgetLayout[] = [];
+  return widgets.map((widget) => {
+    const w = Math.min(widget.layout.w, GRID_COLS);
+    const h = Math.max(1, widget.layout.h);
+    const { x, y } = firstFitPlacement(placed, w, h);
+    const next: WidgetLayout = { x, y, w, h };
+    placed.push(next);
+    return { ...widget, layout: next };
+  });
+}
 
 const createHomeState: StateCreator<HomeState> = (set) => ({
   favorites: defaultFavorites,
@@ -72,6 +129,9 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
   addWidget: (type) =>
     set((state) => {
       const meta = getWidgetMeta(type);
+      const variant = meta.variants.find((v) => v.id === meta.defaultVariant) ?? meta.variants[0];
+      const occupied = state.widgets.map((w) => w.layout);
+      const { x, y } = firstFitPlacement(occupied, variant.w, variant.h);
       return {
         widgets: [
           ...state.widgets,
@@ -79,7 +139,8 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
             id: makeId("widget"),
             type,
             title: meta.defaultTitle,
-            size: meta.defaultSize,
+            variant: variant.id,
+            layout: { x, y, w: variant.w, h: variant.h },
             config: { ...meta.defaultConfig },
           },
         ],
@@ -89,21 +150,44 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
     set((state) => ({
       widgets: state.widgets.filter((widget) => widget.id !== id),
     })),
-  resizeWidget: (id, size) =>
+  setVariant: (id, variantId) =>
     set((state) => ({
       widgets: state.widgets.map((widget) => {
         if (widget.id !== id) return widget;
         const meta = getWidgetMeta(widget.type);
-        if (!meta.allowedSizes.includes(size)) {
+        const found = meta.variants.find((v) => v.id === variantId);
+        if (!found) {
           if (process.env.NODE_ENV !== "production") {
             // eslint-disable-next-line no-console
-            console.warn(`[home-store] resizeWidget rejected: ${widget.type} does not allow size "${size}"`);
+            console.warn(`[home-store] setVariant rejected: ${widget.type} has no variant "${variantId}"`);
           }
           return widget;
         }
-        return { ...widget, size };
+        // Clamp x so the new size still fits the grid.
+        const x = Math.min(widget.layout.x, GRID_COLS - found.w);
+        return {
+          ...widget,
+          variant: found.id,
+          layout: { ...widget.layout, x: Math.max(0, x), w: found.w, h: found.h },
+        };
       }),
     })),
+  setLayout: (id, layout) =>
+    set((state) => ({
+      widgets: state.widgets.map((widget) => (widget.id === id ? { ...widget, layout } : widget)),
+    })),
+  setLayouts: (next) =>
+    set((state) => {
+      const map = new Map(next.map((entry) => [entry.id, entry.layout] as const));
+      return {
+        widgets: state.widgets.map((widget) => {
+          const layout = map.get(widget.id);
+          return layout ? { ...widget, layout } : widget;
+        }),
+      };
+    }),
+  compactWidgets: () =>
+    set((state) => ({ widgets: compactLayouts(state.widgets) })),
   updateWidgetConfig: (id, config) =>
     set((state) => ({
       widgets: state.widgets.map((widget) =>
@@ -168,15 +252,24 @@ export function createHomeStore() {
   return createStore<HomeState>()(createHomeState);
 }
 
+type LegacyWidget = {
+  id: string;
+  type: WidgetType;
+  title: string;
+  size?: unknown;
+  variant?: unknown;
+  layout?: Partial<WidgetLayout>;
+  config?: Record<string, unknown>;
+};
+
 /**
- * Pure migration used by the persist middleware. Exported so tests can pin
- * legacy → current behaviour without setting up the persist middleware.
+ * Pure migration used by the persist middleware.
  *
- * - <= v5: legacy size vocabulary (small/middle/max) is mapped to the v6
- *   vocabulary (compact/regular/wide/tall/hero) and clamped against each
- *   widget's `allowedSizes`. Unknown values fall back to the type's
- *   `defaultSize`.
- * - Preferences gain new defaults if they are missing.
+ *  - <= v6: legacy `size` (small/middle/max/compact/regular/wide/tall/hero) →
+ *    v7 `{variant, w, h}` per the UX-lead spec §8 table.
+ *  - >= v7: validates `variant`, backfills `layout` from the registry.
+ *  - All widgets are auto-packed at the end so legacy collisions resolve to a
+ *    valid free-placement layout.
  */
 export function migrateHomeState(persisted: unknown, _version: number): HomeState {
   const state = persisted as Partial<HomeState> & {
@@ -185,18 +278,58 @@ export function migrateHomeState(persisted: unknown, _version: number): HomeStat
       backgroundImage?: string | null;
       wallpaperLuminance?: number | null;
     };
-    widgets?: Array<{ id: string; type: WidgetType; title: string; size: unknown; config: Record<string, unknown> }>;
+    widgets?: LegacyWidget[];
   };
 
-  const widgets: HomeWidget[] = Array.isArray(state.widgets)
-    ? state.widgets.map((widget) => ({
-        id: widget.id,
-        type: widget.type,
-        title: widget.title,
-        size: resolveWidgetSize(widget.type, widget.size),
-        config: widget.config ?? {},
-      }))
-    : defaultWidgets;
+  const rawWidgets: LegacyWidget[] = Array.isArray(state.widgets)
+    ? state.widgets
+    : (defaultWidgets.map((w) => ({ ...w, size: undefined })) as LegacyWidget[]);
+
+  const upgraded: HomeWidget[] = rawWidgets.map((widget) => {
+    const meta = getWidgetMeta(widget.type);
+    const candidateVariantId =
+      typeof widget.variant === "string" ? widget.variant : null;
+    const variantSpec = candidateVariantId
+      ? resolveVariant(widget.type, candidateVariantId)
+      : null;
+
+    let variantId: string;
+    let w: number;
+    let h: number;
+    if (variantSpec) {
+      variantId = variantSpec.id;
+      w = variantSpec.w;
+      h = variantSpec.h;
+    } else {
+      const mapped = legacySizeToVariantSpec(widget.type, widget.size);
+      variantId = mapped.variant;
+      w = mapped.w;
+      h = mapped.h;
+    }
+
+    const persistedLayout = widget.layout ?? {};
+    const layout: WidgetLayout = {
+      x: typeof persistedLayout.x === "number" ? persistedLayout.x : 0,
+      y: typeof persistedLayout.y === "number" ? persistedLayout.y : 0,
+      w: typeof persistedLayout.w === "number" ? persistedLayout.w : w,
+      h: typeof persistedLayout.h === "number" ? persistedLayout.h : h,
+    };
+    // Width must always match the variant's expected w/h after migration.
+    layout.w = w;
+    layout.h = h;
+
+    return {
+      id: widget.id,
+      type: widget.type,
+      title: widget.title ?? meta.defaultTitle,
+      variant: variantId,
+      layout,
+      config: widget.config ?? { ...meta.defaultConfig },
+    };
+  });
+
+  // Auto-pack to guarantee no overlaps post-migration.
+  const widgets = autoPack(upgraded);
 
   const preferences: Preferences = state.preferences
     ? {
@@ -228,7 +361,7 @@ export function migrateHomeState(persisted: unknown, _version: number): HomeStat
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 6,
+    version: 7,
     migrate: (persisted, version) => migrateHomeState(persisted, version),
     partialize: (state) => ({
       favorites: state.favorites,

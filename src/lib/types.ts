@@ -103,7 +103,29 @@ export type WidgetConfigByType = {
   bookmark: BookmarkConfig;
 };
 
+/**
+ * @deprecated Retired in v7 in favour of `WidgetVariant` + `WidgetLayout`.
+ * Kept only as a typing aid for the legacy → v7 migration path.
+ */
 export type WidgetSize = "compact" | "regular" | "wide" | "tall" | "hero";
+
+/** Registry-validated id, e.g. `"clock-square"` or `"todo-board"`. */
+export type WidgetVariant = string;
+
+/** Free-placement coordinates on the workspace grid (cells, not pixels). */
+export type WidgetLayout = { x: number; y: number; w: number; h: number };
+
+export type WidgetVariantSpec = {
+  id: string;
+  label: string;
+  w: number;
+  h: number;
+  minW: number;
+  minH: number;
+  maxW: number;
+  maxH: number;
+  description?: string;
+};
 
 export type ZoneId = "search" | "favorites" | "workspace";
 
@@ -121,7 +143,10 @@ export type HomeWidget = {
   id: string;
   type: WidgetType;
   title: string;
-  size: WidgetSize;
+  /** Active variant id, validated against the type's registry entry. */
+  variant: WidgetVariant;
+  /** Free-placement coordinates on the 12-col grid (cells). */
+  layout: WidgetLayout;
   /**
    * Per-widget configuration. Stored loosely so migrations remain trivial,
    * but each widget component reads/writes through `WidgetConfigByType`.

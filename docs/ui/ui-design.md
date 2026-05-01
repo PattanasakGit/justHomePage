@@ -52,46 +52,56 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 
 ## Widgets
 
-- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, cycle resize, overflow popover) and dispatches body rendering by type.
+- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header drag handle + `⋯` overflow trigger that opens a Variants picker over Remove) and dispatches body rendering by type.
 - All widgets use theme tokens (`--accent`, `--accent-soft`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` outside two documented exceptions: the favorite tile brand-icon plate and the bookmark widget plate.
 - Pomodoro uses `tabular-nums` for the timer display so digit width stays steady.
 - Bookmark thumbnail uses a light brand-icon plate (the documented exception); falls back to a `FiBookmark` glyph when no metadata is fetched yet.
 
-### Size vocabulary (per-widget)
+### Variant + free-placement grid (since 2026-05-01)
 
-Five size ids share a Tailwind class map:
+The legacy 5-id `WidgetSize` vocabulary is **retired**. Each widget now exposes a curated `variants: WidgetVariantSpec[]` list (`src/components/widgets/widget-registry.ts`); each spec carries `{id, label, w, h, minW, minH, maxW, maxH, description}` in **grid cells**, not pixels. `defaultVariant` is always a member of the list.
 
-| id | sm span | lg span | row-span | typical use |
-|----|---------|---------|----------|-------------|
-| `compact` | 1 | 1 | 1 (see exceptions) | single metric |
-| `regular` | 2 | 2 | 1 (see exceptions) | label + body |
-| `wide` | 2 | 4 | 1 (see exceptions) | timeline / horizontal list |
-| `tall` | 1 | 2 | 2 | editor / scroll list |
-| `hero` | 2 | 4 | 2 | rich panel |
+Widgets are free-placed on a responsive grid via `react-grid-layout`'s `Responsive` component:
 
-Each widget exposes a curated `allowedSizes: WidgetSize[]` and a `defaultSize` (defined in `src/components/widgets/widget-registry.ts`). `defaultSize` is always a member of `allowedSizes`. The `home-store` `resizeWidget` action rejects (no-op + dev `console.warn`) sizes outside the widget's allowed list.
+| viewport | breakpoint | cols | row height | gap |
+|---|---|---|---|---|
+| ≥ 1024 px | `lg` | 12 | 80 | 12 |
+| 640–1023 px | `md` | 8 | 70 | 10 |
+| < 640 px | `sm` | 4 | 60 | 8 |
 
-#### Per-(type, size) row-span exceptions
+On `sm` widgets auto-stack as a single column (sorted by `(y, x)` of the desktop layout); drag and resize are disabled. On `lg` and `md` the user can drag (header strip is the handle, see below) and resize from the bottom-right corner. Per-variant `min/max` clamp the resize handle.
 
-A handful of (widget type, size) pairs cannot fit their composed body inside the ~156 px row height that the grid otherwise allocates when a 1-row sibling pins the row. For those pairs `widget-frame.tsx` adds an extra `lg:row-span-2` via the `bodyRowSpan(type, size)` lookup (`rowSpanOverride` table) so the grid hands the card a second row at `lg+`. The exception list is intentionally small and per-cell, never per-size globally:
+Widget layout state lives on `HomeWidget.layout = {x, y, w, h}`; `HomeWidget.variant` is the currently selected variant id. `home-store` exposes `setVariant(id, variantId)` (writes both fields), `setLayout(id, layout)`, `setLayouts(entries)` (used by RGL's `onLayoutChange`), and `compactWidgets()` (vertical compaction triggered by the **Compact** button in the edit-mode workspace header).
 
-| type | size | row-span |
-|---|---|---|
-| `clock` | `regular` | `lg:row-span-2` (Bangkok-class tz line was clipping) |
-| `weather` | `compact` | `lg:row-span-2` (`Allow location` footer was clipping) |
-| `weather` | `regular` | `lg:row-span-2` (left-column hero + footer) |
-| `pomodoro` | `wide` | `lg:row-span-2` (128 px ring + play row) |
+### Variant submenu in `⋯` overflow popover
 
-Below the `lg` breakpoint (and on the cells not listed above) the original 1-row span still applies. Bake new exceptions into this table in `widget-frame.tsx` — never inside individual widget bodies.
+The single trailing control on each widget header in edit mode is the `⋯` overflow trigger. It opens a 240 px popover (`--popup` background) containing:
 
-### Cycle resize control + overflow popover
+- **Size** section header.
+- One row per variant: 28×20 mini-preview rectangle proportional to `w×h`, humanised label (`Square`, `Banner`, `Display`…), `w×h` chip in `tabular-nums`. The active row is filled with `--accent-soft`, gets a 3 px `--accent` left border, and shows a `FiCheck` glyph.
+- A 1 px `--border` divider.
+- **Remove** menuitem (`FiTrash2` + label).
 
-In edit mode, each widget header shows two trailing controls:
+The popover is rendered through `createPortal(document.body)` so it escapes the article's `overflow-hidden`. Pressing `r` while a widget has focus opens the same popover; the trigger advertises `aria-keyshortcuts="r"` and the popover root is `role="menu"` with `role="menuitemradio"` rows (`aria-checked`).
 
-1. A single **cycle button** that advances through `allowedSizes` (icon mapping: `compact → FiSquare`, `regular → FiColumns`, `wide → FiMinus`, `tall → FiBookOpen`, `hero → FiMaximize2`). When `allowedSizes.length === 1` the button is **not rendered** (no dead affordance). The button label includes the current size; `r` keypress while the article holds focus cycles forward.
-2. An **overflow trigger** (`⋯` / `FiMoreHorizontal`) that opens a small popover (`--popup` background) with theme-token menu items. Today only `Remove` is rendered; widget-specific `Settings…` items will appear here in the future and are simply omitted when no settings exist.
+When `variants.length === 1` the Size section is omitted (no dead affordance) — only Remove renders.
 
-Both trailing buttons stop pointer propagation so they do not initiate `@dnd-kit` drag.
+### Workspace edit chrome
+
+- **Grid paper** appears under the workspace only in edit mode: 1 px `repeating-linear-gradient` lines in `color-mix(--accent-soft 50%, transparent)`, fading in over 220 ms. Clamped to 0.18 alpha on neon themes (`theme-cyber/neonCyan/neonPink/neonViolet`).
+- **Resize handles** are rendered on the bottom-right corner only — 14×14 `--accent` square with a 2 px `--surface` (or `--ink-inverse` on dark vibrant themes) inner ring. Visible on widget hover/focus, hidden at rest. The handle is suppressed when the widget exposes a single variant.
+- **Drag preview**: the dragged tile gets `transform: scale(1.02)`, `shadow-lg`, and a 1 px `--accent` outline. The placeholder is filled with `color-mix(--accent-soft 60%, transparent)` and outlined with a 1.5 px dashed `--accent`.
+- The **header strip** is the only drag surface (`.widget-drag-handle`). RGL is configured with `dragConfig.handle = ".widget-drag-handle"` and `dragConfig.cancel = "button, [role='menu']"` so buttons inside the header (the `⋯` trigger) still register clicks.
+
+### v6 → v7 migration
+
+`migrateHomeState(persisted, version)` honours the new shape:
+
+1. If a widget has a recognised `variant` string, keep it; pull `{w, h}` from the registry.
+2. Otherwise map the legacy `size` enum via `legacySizeToVariantSpec(type, size)` (table in `widget-registry.ts`). Unknown values fall back to `defaultVariant`.
+3. Backfill `layout` from the registry when missing.
+4. Run `autoPack` (first-fit top-left in array order) so the resulting layout is overlap-free.
+5. `partialize` writes `widgets`, `favorites`, `preferences` only; persist version is bumped to **7**.
 
 ### Quiet OS hero language
 
