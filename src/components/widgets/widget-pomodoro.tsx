@@ -272,18 +272,22 @@ function CompactBody({
   const elapsedPct = total > 0
     ? Math.min(100, Math.max(0, ((total - secondsLeft) / total) * 100))
     : 0;
+  // Single-row body: ModeSwitch + digits (flex-1) + ControlButtons. The 2 px
+  // progress bar is rendered as an absolute hairline pinned to the bottom of
+  // the body's relative box so it never consumes vertical layout space (this
+  // is what fixes the play/reset clip at 3×2). See
+  // docs/ux/explorations/2026-05-01-pomodoro-size-fix.md.
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
-      <div className="flex min-w-0 items-center justify-between gap-3">
-        <ModeSwitch mode={mode} onSwitch={onSwitch} />
-        <span
-          data-testid="pomo-digits"
-          style={{ color: accentColor }}
-          className="text-3xl font-semibold tabular-nums tracking-tight leading-none"
-        >
-          {time}
-        </span>
-      </div>
+    <div className="relative flex h-full min-h-0 w-full items-center justify-between gap-2 overflow-hidden">
+      <ModeSwitch mode={mode} onSwitch={onSwitch} />
+      <span
+        data-testid="pomo-digits"
+        style={{ color: accentColor }}
+        className="shrink-0 whitespace-nowrap text-xl font-semibold tabular-nums leading-none tracking-tight"
+      >
+        {time}
+      </span>
+      <ControlButtons running={running} onToggle={onToggle} onReset={onReset} />
       <div
         role="progressbar"
         aria-label="Pomodoro progress"
@@ -291,15 +295,12 @@ function CompactBody({
         aria-valuemax={100}
         aria-valuenow={Math.round(elapsedPct)}
         data-testid="pomo-progressbar"
-        className="h-[2px] w-full overflow-hidden rounded-full bg-[color:var(--surface-strong)]"
+        className="absolute inset-x-0 bottom-0 h-[2px] overflow-hidden rounded-full bg-[color:var(--surface-strong)]"
       >
         <div
           className="h-full rounded-full bg-[color:var(--accent)] transition-[width] duration-150"
           style={{ width: `${elapsedPct}%` }}
         />
-      </div>
-      <div className="flex items-center gap-2">
-        <ControlButtons running={running} onToggle={onToggle} onReset={onReset} />
       </div>
     </div>
   );

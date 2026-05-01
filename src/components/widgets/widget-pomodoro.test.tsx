@@ -66,6 +66,48 @@ describe("WidgetPomodoro variants", () => {
     expect(Number(bar?.getAttribute("aria-valuenow"))).toBeCloseTo(0, 0);
   });
 
+  it("pomo-compact: single-row layout — ModeSwitch, digits, ControlButtons share one flex parent (no flex-col stack)", () => {
+    const { container, getByLabelText } = render(
+      <WidgetPomodoro
+        variant="pomo-compact"
+        config={{ focusMinutes: 25, breakMinutes: 5 }}
+      />,
+    );
+    flushObservers(220, 130);
+
+    const digits = container.querySelector("[data-testid='pomo-digits']") as HTMLElement | null;
+    expect(digits).not.toBeNull();
+
+    // ControlButtons row anchor — query by the play button's aria-label, then
+    // walk up to the ControlButtons container (the immediate flex wrapper).
+    const playBtn = getByLabelText("Start timer");
+    const resetBtn = getByLabelText("Reset timer");
+    expect(playBtn).not.toBeNull();
+    expect(resetBtn).not.toBeNull();
+
+    // ModeSwitch is the inline-flex tab cluster — find via the "focus" tab
+    // text, then walk to its parent (the ModeSwitch root).
+    const focusTab = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.toLowerCase() === "focus",
+    ) as HTMLElement | undefined;
+    expect(focusTab).toBeDefined();
+    const modeSwitch = focusTab!.parentElement as HTMLElement;
+    const controlButtons = playBtn.parentElement as HTMLElement;
+
+    // All three must share the SAME flex parent — that is the single-row body
+    // root. No vertical stacking.
+    const sharedParent = digits!.parentElement;
+    expect(sharedParent).not.toBeNull();
+    expect(modeSwitch.parentElement).toBe(sharedParent);
+    expect(controlButtons.parentElement).toBe(sharedParent);
+
+    // The shared parent is a flex row (no flex-col), and it occupies the
+    // body's full height so it never overflows.
+    expect(sharedParent!.className).toMatch(/(^|\s)flex(\s|$)/);
+    expect(sharedParent!.className).not.toMatch(/flex-col/);
+    expect(sharedParent!.className).toMatch(/h-full/);
+  });
+
   it("pomo-card: renders a small SVG ring left + grid-rows right column for tabs/buttons", () => {
     const { container } = render(
       <WidgetPomodoro
