@@ -42,3 +42,11 @@
 - Brand icons render in their brand color; neutral icons render in `--ink` so they stay legible on every theme.
 - Empty state: "No icons match your search" when the query and category produce zero results.
 - The picker grid is capped at `max-h-[260px]` with internal scroll so the modal Save button stays visible on small viewports.
+
+## Widgets — Expanded Set
+
+- The Workspace zone now exposes eight widget types in the Add menu: Clock, Date, Notes, Quick links, Pomodoro, Todo, Weather, Bookmark.
+- Pomodoro: tab between Focus / Break, primary action toggles play/pause, secondary action resets the current cycle. Auto-pauses when timer hits zero and pre-loads the opposite mode's full duration.
+- Todo: inline add input, click checkbox to mark done, hover/focus reveals delete; "Clear done" appears once at least one item is complete. Empty list shows a calm "Nothing on the list yet" placeholder.
+- Weather: uses the existing geolocation + `/api/local-weather` pipeline. Handles `blocked`/`error` states with a one-line hint instead of a fake reading.
+- Bookmark: in edit mode the tile becomes a tiny form (URL + caption); outside edit mode it's a launch tile that opens in a new tab with `noopener noreferrer`. Thumbnail and caption auto-fill from `/api/site-metadata`.

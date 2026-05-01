@@ -66,3 +66,11 @@ Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `
 - Persisted store version bumped from 4 → 5. The migration backfills both fields with defaults so any v4 snapshot keeps working without resetting other preferences.
 - Store actions: `setZoneOrder`, `setZoneVisible(zone, visible)`, `reorderZones(activeId, overId)` (accepts `zone-` prefixed dnd-kit ids), `resetZones`.
 - DnD routing in `home-page.tsx` discriminates by id prefix: `zone-` → `reorderZones`, `fav` → `reorderFavorites`, `widget` → `reorderWidgets`.
+
+## Widget Registry
+
+- All widget metadata lives in `src/components/widgets/widget-registry.ts`, keyed by `WidgetType`. Each entry exposes `{ label, defaultTitle, icon, defaultSize, defaultConfig }`.
+- `addWidget(type)` in the home store reads defaults from the registry — no per-type `if/else` branches outside the registry file.
+- Per-widget config types are declared in `WidgetConfigByType` (`PomodoroConfig`, `TodoConfig`, `WeatherConfig`, `BookmarkConfig`, plus the existing notes/quickLinks shapes). `HomeWidget.config` is loosened to `Record<string, unknown>` so persisted snapshots remain non-fragile; each widget component reads its slice via the typed helper.
+- Pomodoro logic lives in a pure `pomodoroReducer` (focus → break auto-switch on tick, reset preserves current mode). Todo mutations live in pure helpers (`addTodo`, `toggleTodo`, `removeTodo`, `clearDone`). Both have unit tests.
+- Persisted store version stays at 5; migrating from v4 backfills both zone preferences and widget defaults so legacy snapshots keep working.

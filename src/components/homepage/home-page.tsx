@@ -15,13 +15,11 @@ import { useHomeStore } from "@/stores/home-store";
 import type { Favorite, FavoriteInput, WidgetType, ZoneId } from "@/lib/types";
 import { useLocalEnvironment } from "@/hooks/use-local-environment";
 import { buildThemeVariables, getReadableTextPair, resolveContrast } from "@/lib/theme";
+import { widgetRegistry } from "@/components/widgets/widget-registry";
 
-const widgetOptions: Array<{ type: WidgetType; label: string }> = [
-  { type: "clock", label: "Clock" },
-  { type: "date", label: "Date" },
-  { type: "notes", label: "Notes" },
-  { type: "quickLinks", label: "Quick links" },
-];
+const widgetOptions: Array<{ type: WidgetType; label: string }> = (Object.keys(widgetRegistry) as WidgetType[]).map(
+  (type) => ({ type, label: widgetRegistry[type].label }),
+);
 
 const zoneLabels: Record<ZoneId, string> = {
   search: "Search",

@@ -53,3 +53,10 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Custom-logo selection must scale beyond the brand-only set; the picker exposes search, category filters, and pagination.
 - All 32 brand icons remain available; ~60 curated neutral icons (Feather/`react-icons/fi`) are added across Productivity, Communication, Media, Money, Travel, and General.
 - Letter avatar remains the default fallback; selecting any icon clears the auto-detected `iconUrl`.
+
+## Widgets — Pomodoro / Todo / Weather / Bookmark
+
+- Workspace must support pomodoro, todo, weather, and bookmark in addition to the existing clock, date, notes, quick-links set.
+- Pomodoro and todo state must persist with the rest of the store and survive reload.
+- Weather widget must degrade gracefully when geolocation permission is blocked or the API fails; never block UI rendering.
+- Bookmark widget must use `noopener noreferrer` for external links and only enable navigation when the URL is non-empty.

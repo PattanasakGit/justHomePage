@@ -49,3 +49,10 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 - Brand icons keep their brand color; neutral icons use `var(--ink)` so they remain readable across light/dark themes.
 - Search field height is 40px; chip row is horizontally scrollable on overflow; grid is `grid-cols-7 gap-2` with 11×11 px tiles.
 - Container uses `--surface` background, internal grid scrolls at `max-h-[260px]` to protect modal layout.
+
+## Widgets
+
+- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, size buttons, remove) and dispatches body rendering by type.
+- All widgets use theme tokens (`--accent`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` (the brand-icon plate exception still applies).
+- Pomodoro uses `tabular-nums` for the timer display so digit width stays steady.
+- Bookmark thumbnail uses a `--surface-strong` plate; falls back to a `FiBookmark` glyph when no metadata is fetched yet.
