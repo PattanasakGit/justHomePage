@@ -69,19 +69,21 @@ Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `
 
 ## Widget Registry
 
-- All widget metadata lives in `src/components/widgets/widget-registry.ts`, keyed by `WidgetType`. Each entry exposes `{ label, defaultTitle, icon, defaultSize, allowedSizes, defaultConfig }`.
-- `WidgetSize` is a global string union (`"compact" | "regular" | "wide" | "tall" | "hero"`); the registry curates which sizes each widget supports via `allowedSizes`. `defaultSize` is always a member of `allowedSizes`. Tests in `widget-registry.test.ts` enforce both invariants.
-- The home-store `resizeWidget(id, size)` action clamps requests against the type's `allowedSizes` (no-op + dev `console.warn` on miss) so a broken caller cannot push a widget into an unsupported size.
-- The pure helper `nextSize(current, allowed)` (and `previousSize`) lives in `src/components/widgets/size-cycle.ts`; the cycle button in `widget-frame.tsx` calls it on click and on the `r` keyboard shortcut.
-- `addWidget(type)` reads defaults from the registry — no per-type `if/else` branches outside the registry file.
+- All widget metadata lives in `src/components/widgets/widget-registry.ts`, keyed by `WidgetType`. Each entry exposes `{ label, defaultTitle, icon, defaultVariant, variants, defaultConfig }`.
+- `WidgetVariantSpec = { id, label, w, h, minW, minH, maxW, maxH, description? }` — every variant defines its size in cells plus the resize-handle clamps. `defaultVariant` is always one of `variants`. Tests in `widget-variants.test.ts` enforce: ≥3 variants per widget, unique ids, default ∈ variants, positive integer w/h, and `min ≤ default ≤ max` for both axes.
+- `WidgetSize` is **deprecated**; it survives as a typing aid for the v6 → v7 migration only. Layout consumers read `HomeWidget.layout = {x, y, w, h}` and `HomeWidget.variant`.
+- The home-store actions are: `setVariant(id, variantId)` (clamped against the registry; rejects unknown ids with a dev `console.warn`), `setLayout(id, layout)` (single update), `setLayouts(entries)` (used by RGL's `onLayoutChange`), and `compactWidgets()` (vertical first-fit pack).
+- `addWidget(type)` reads defaults from the registry and runs `firstFitPlacement` against the existing widgets so the new widget never overlaps.
 - Per-widget config types are declared in `WidgetConfigByType` (`PomodoroConfig`, `TodoConfig`, `WeatherConfig`, `BookmarkConfig`, plus the existing notes/quickLinks shapes). `HomeWidget.config` is loosened to `Record<string, unknown>` so persisted snapshots remain non-fragile; each widget component reads its slice via the typed helper.
 - Pomodoro logic lives in a pure `pomodoroReducer` (focus → break auto-switch on tick, reset preserves current mode). The 140-px progress ring (`pomodoro-ring.tsx`) is a separate pure component that animates `stroke-dashoffset` and switches dasharray for break vs focus. Todo mutations live in pure helpers. All have unit tests.
 
-### Persist v5 → v6 migration
+### Persist v6 → v7 migration
 
-- Persisted store version is bumped from 5 → 6 to retire the old `small | middle | max` size vocabulary.
-- The migrate function (`migrateHomeState` in `src/stores/home-store.ts`) walks each persisted widget and resolves its size via `resolveWidgetSize(type, raw)` from the widget registry:
-  1. Pass-through if the raw value is already a valid size for the widget's `allowedSizes`.
-  2. Else map through the legacy table `{ small: "compact", middle: "regular", max: "wide" }`.
-  3. If the mapped value is still not allowed (e.g. `notes` does not support `wide`), fall back to the widget's `defaultSize`.
-- Preferences continue to backfill missing fields against `defaultPreferences` so older v4/v5 snapshots keep working.
+- Persisted store version is bumped to **7** to retire `WidgetSize` and switch widgets to the variant + free-placement model.
+- `migrateHomeState` in `src/stores/home-store.ts` walks each persisted widget:
+  1. If `widget.variant` is a known id for the widget type, keep it; pull `{w, h}` from `widgetRegistry[type].variants`.
+  2. Otherwise consume the legacy `widget.size` via `legacySizeToVariantSpec(type, size)` (per-type table, see UX-lead spec §8). Unknown values fall back to `defaultVariant`.
+  3. Backfill `layout` from the registry when missing; persisted `{x, y}` is preserved when present.
+- After per-widget upgrades, `autoPack(widgets)` runs a first-fit top-left scan in array order so any leftover overlap from legacy snapshots is resolved.
+- The 12-col grid is the canonical surface; tablet (`md`, 8 cols) and mobile (`sm`, 4 cols) are derived layouts (`mediumLayout`, `smallLayout`) on each render.
+- `react-grid-layout` (`Responsive` component) is the workspace surface; favorites and zones still use `@dnd-kit`. The two libraries do not interact — RGL only owns the workspace zone interior.

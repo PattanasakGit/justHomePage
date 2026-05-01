@@ -51,22 +51,29 @@
 - Weather: uses the existing geolocation + `/api/local-weather` pipeline. Handles `blocked`/`error` states with a one-line hint instead of a fake reading. Idle/locating shows a shimmer on the temperature slot only.
 - Bookmark: in edit mode the tile becomes a tiny form (URL + caption); outside edit mode it's a launch tile that opens in a new tab with `noopener noreferrer`. Thumbnail and caption auto-fill from `/api/site-metadata`. Empty state placeholder reads "Add a bookmark — paste a URL in edit mode."
 
-### Per-widget sizes + minimal resize
+### Free-placement workspace + per-widget variants (since 2026-05-01)
 
-Sizes are **per-widget**, picked from a shared vocabulary (`compact`, `regular`, `wide`, `tall`, `hero`). Each widget declares its `allowedSizes` and `defaultSize`:
+The workspace is a **fine grid** that the user freely arranges. Widgets carry `{x, y, w, h}` coordinates in cells, and each widget exposes a curated **variants** list (the user picks one — the variant supplies `{w, h}` and `{minW, maxW, minH, maxH}` clamps).
 
-| widget | allowed | default |
-|--------|---------|---------|
-| clock | `compact`, `regular` | `compact` |
-| date | `compact`, `regular` | `compact` |
-| weather | `compact`, `regular` | `compact` |
-| bookmark | `compact`, `regular` | `compact` |
-| quickLinks | `regular`, `wide` | `regular` |
-| pomodoro | `regular`, `wide` | `regular` |
-| todo | `regular`, `tall` | `regular` |
-| notes | `regular`, `tall`, `hero` | `tall` |
+| widget | variants (default in **bold**) |
+|--------|-------------------------------|
+| clock | **clock-square 2×2**, clock-banner 4×1, clock-display 4×3 |
+| date | **date-square 2×2**, date-banner 4×1, date-calendar 4×4 |
+| weather | **weather-square 2×2**, weather-detail 4×2, weather-forecast 6×3 |
+| bookmark | **bookmark-tile 2×2**, bookmark-card 3×2, bookmark-banner 6×2 |
+| quickLinks | **links-row 4×2**, links-grid 4×3, links-strip 8×1 |
+| pomodoro | **pomo-card 4×3**, pomo-compact 3×2, pomo-wide 6×3 |
+| todo | **todo-list 4×4**, todo-compact 3×3, todo-board 6×5 |
+| notes | **notes-pad 4×4**, notes-strip 6×2, notes-page 6×6 |
 
-In edit mode the widget header carries two minimal controls instead of the previous three-pill row: a **single cycle button** (advances through `allowedSizes`, hidden when only one size is allowed) and an **overflow trigger** (`⋯`) that opens a popover with `Remove` (and future per-widget Settings entries). The cycle button is keyboard-shortcut-bound to `r` while the article holds focus.
+**Edit mode chrome.**
+- The widget header strip is the drag handle (RGL `.widget-drag-handle`); body controls (textareas, todo rows, pomodoro buttons) stay pointer-interactive.
+- Bottom-right corner exposes a 14×14 `--accent` resize handle on hover/focus; clamps to the variant's `min/max`.
+- The header trailing control is the `⋯` overflow trigger; it opens a popover with a **Size** section (variants list) over a Remove action. Active variant gets `--accent-soft` fill and `--accent` left border. Press `r` while a widget is focused to open the same popover.
+- The workspace header in edit mode includes a **Compact** button that vertically packs the layout (`compactWidgets()`), plus a tray of `+ Widget` buttons.
+- Removing a widget does **not** auto-reflow others — user-arranged layouts are preserved.
+
+**Empty state.** When no widgets exist and edit mode is on, a centred 320×180 dashed `--border` panel shows `+ Add a widget to get started` with sub-text. Out of edit mode, the same area collapses to a single muted line (`Turn on Edit to place widgets.`).
 
 ### Quiet OS visual direction
 

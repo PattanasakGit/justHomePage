@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { FiPause, FiPlay, FiRotateCcw } from "react-icons/fi";
 import {
   createInitialPomodoroState,
@@ -8,18 +8,29 @@ import {
   pomodoroReducer,
   type PomodoroMode,
 } from "@/components/widgets/pomodoro-engine";
-import { PomodoroRing } from "@/components/widgets/pomodoro-ring";
-import type { PomodoroConfig, WidgetSize } from "@/lib/types";
+import { PomodoroRing, RING_SIZE_PX, type PomodoroRingSize } from "@/components/widgets/pomodoro-ring";
+import type { PomodoroConfig, WidgetSize, WidgetVariant } from "@/lib/types";
 import { useAccentTextColor } from "@/hooks/use-accent-text-color";
 
 const DEFAULTS: PomodoroConfig = { focusMinutes: 25, breakMinutes: 5 };
 
+/** Inner safety margin (in CSS px) reserved on each side of the ring inside
+ *  the widget body. Matches the rule in `pomodoro-ring.tsx` (12 each side =
+ *  24 total) and is also the padding inside the dedicated ring slot so the
+ *  ring observes a stable, oversized parent. */
+const RING_SAFETY_MARGIN_PX = 12;
+const RING_SLOT_PADDING_PX = 12;
+
 export function WidgetPomodoro({
   config,
-  size = "regular",
+  size,
+  variant,
 }: {
   config: Partial<PomodoroConfig>;
+  /** @deprecated Pass `variant` instead. Kept for legacy call sites. */
   size?: WidgetSize;
+  /** Active widget variant id. Drives body composition. */
+  variant?: WidgetVariant;
 }) {
   const focusMinutes = config.focusMinutes ?? DEFAULTS.focusMinutes;
   const breakMinutes = config.breakMinutes ?? DEFAULTS.breakMinutes;
@@ -36,67 +47,260 @@ export function WidgetPomodoro({
   }, [state.running]);
 
   const totalSeconds = (state.mode === "focus" ? focusMinutes : breakMinutes) * 60;
-  const ringSize = size === "wide" ? "lg" : "sm";
   const time = formatPomodoroTime(state.remainingSeconds);
 
-  if (size === "wide") {
-    return (
-      <div className="flex h-full min-h-0 flex-col overflow-hidden">
-        <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr_auto] items-center gap-6">
-        <PomodoroRing
-          secondsLeft={state.remainingSeconds}
-          total={totalSeconds}
-          mode={state.mode}
-          size={ringSize}
-        />
-        <div className="flex min-w-0 flex-col items-start gap-1">
-          <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
-            {state.mode}
-          </span>
-          <span
-            style={{ color: accentColor }}
-            className="text-4xl font-semibold tabular-nums leading-none tracking-tight"
-          >
-            {time}
-          </span>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <ModeSwitch mode={state.mode} onSwitch={(mode) => dispatch({ type: "switchMode", mode })} />
-          <ControlButtons
-            running={state.running}
-            onToggle={() => dispatch({ type: state.running ? "pause" : "start" })}
-            onReset={() => dispatch({ type: "reset" })}
-          />
-        </div>
-        </div>
-      </div>
-    );
-  }
+  // Resolve variant. Fall back to legacy `size` for any caller that hasn't
+  // been migrated yet.
+  const resolved = resolveVariantFromProps(variant, size);
 
-  // regular — horizontal flex: ring left (88px), controls right.
-  return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="flex min-h-0 flex-1 items-center gap-4">
-      <PomodoroRing
+  if (resolved === "pomo-compact") {
+    return (
+      <CompactBody
+        time={time}
         secondsLeft={state.remainingSeconds}
         total={totalSeconds}
         mode={state.mode}
-        size={ringSize}
-      >
-        <div className="text-center">
-          <div className="text-base font-semibold tabular-nums leading-none tracking-tight">
-            {time}
+        running={state.running}
+        accentColor={accentColor}
+        onSwitch={(mode) => dispatch({ type: "switchMode", mode })}
+        onToggle={() => dispatch({ type: state.running ? "pause" : "start" })}
+        onReset={() => dispatch({ type: "reset" })}
+      />
+    );
+  }
+
+  if (resolved === "pomo-wide") {
+    return (
+      <BodyWithRing
+        ringSize="lg"
+        renderRing={(visible) => (
+          <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr_auto] items-center gap-6">
+              {visible ? (
+                <div
+                  className="flex shrink-0 items-center justify-center"
+                  style={{
+                    width: RING_SIZE_PX.lg + RING_SLOT_PADDING_PX * 2,
+                    height: RING_SIZE_PX.lg + RING_SLOT_PADDING_PX * 2,
+                  }}
+                >
+                  <PomodoroRing
+                    secondsLeft={state.remainingSeconds}
+                    total={totalSeconds}
+                    mode={state.mode}
+                    size="lg"
+                  />
+                </div>
+              ) : null}
+              <div
+                data-testid="pomo-digits"
+                className="flex min-w-0 flex-col items-start gap-1 text-4xl font-semibold tabular-nums leading-none tracking-tight"
+                style={{ color: accentColor }}
+              >
+                <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                  {state.mode}
+                </span>
+                <span>{time}</span>
+              </div>
+              <div
+                data-testid="pomo-controls"
+                className="grid grid-rows-[auto_auto] gap-2 justify-items-end"
+              >
+                <ModeSwitch
+                  mode={state.mode}
+                  onSwitch={(mode) => dispatch({ type: "switchMode", mode })}
+                />
+                <ControlButtons
+                  running={state.running}
+                  onToggle={() => dispatch({ type: state.running ? "pause" : "start" })}
+                  onReset={() => dispatch({ type: "reset" })}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      />
+    );
+  }
+
+  // pomo-card (default): ring left (sm 88px) + grid-rows right column.
+  return (
+    <BodyWithRing
+      ringSize="sm"
+      renderRing={(visible) => (
+        <div className="flex h-full min-h-0 flex-col overflow-hidden">
+          <div className="flex min-h-0 flex-1 items-center gap-4">
+            {visible ? (
+              <div
+                className="flex shrink-0 items-center justify-center"
+                style={{
+                  width: RING_SIZE_PX.sm + RING_SLOT_PADDING_PX * 2,
+                  height: RING_SIZE_PX.sm + RING_SLOT_PADDING_PX * 2,
+                }}
+              >
+                <PomodoroRing
+                  secondsLeft={state.remainingSeconds}
+                  total={totalSeconds}
+                  mode={state.mode}
+                  size="sm"
+                >
+                  <div className="text-center">
+                    <div className="text-base font-semibold tabular-nums leading-none tracking-tight">
+                      {time}
+                    </div>
+                  </div>
+                </PomodoroRing>
+              </div>
+            ) : (
+              <span
+                data-testid="pomo-card-digits-fallback"
+                style={{ color: accentColor }}
+                className="text-2xl font-semibold tabular-nums tracking-tight leading-none"
+              >
+                {time}
+              </span>
+            )}
+            <div
+              data-testid="pomo-controls"
+              className="grid min-w-0 flex-1 grid-rows-[auto_auto] gap-2 justify-items-end"
+            >
+              <ModeSwitch
+                mode={state.mode}
+                onSwitch={(mode) => dispatch({ type: "switchMode", mode })}
+              />
+              <ControlButtons
+                running={state.running}
+                onToggle={() => dispatch({ type: state.running ? "pause" : "start" })}
+                onReset={() => dispatch({ type: "reset" })}
+              />
+            </div>
           </div>
         </div>
-      </PomodoroRing>
-      <div className="flex min-w-0 flex-1 flex-col items-end gap-2">
-        <ModeSwitch mode={state.mode} onSwitch={(mode) => dispatch({ type: "switchMode", mode })} />
-        <ControlButtons
-          running={state.running}
-          onToggle={() => dispatch({ type: state.running ? "pause" : "start" })}
-          onReset={() => dispatch({ type: "reset" })}
+      )}
+    />
+  );
+}
+
+/**
+ * Wraps a ring-using composition with a parent-size guard. Measures the body
+ * via `ResizeObserver`; passes `visible=false` to `renderRing` when
+ * `min(width, height) − 24 < RING_SIZE_PX[ringSize]`. Hosts that need a flat
+ * fallback should branch on `visible`.
+ */
+function BodyWithRing({
+  ringSize,
+  renderRing,
+}: {
+  ringSize: PomodoroRingSize;
+  renderRing: (visible: boolean) => React.ReactElement;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    // The host's body must fit the full ring slot (ring + slot padding on
+    // every side) — that's the same `ringSize + 24` the ring itself checks,
+    // so host and ring agree on the threshold.
+    const need = RING_SIZE_PX[ringSize] + RING_SLOT_PADDING_PX * 2;
+    const evaluate = (width: number, height: number) => {
+      if (width <= 0 && height <= 0) return;
+      const available = Math.min(width, height);
+      setVisible(available >= need);
+    };
+    const rect = node.getBoundingClientRect();
+    evaluate(rect.width, rect.height);
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      const available = Math.min(width, height);
+      setVisible(available >= need);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ringSize]);
+
+  return (
+    <div ref={ref} className="h-full w-full min-h-0 min-w-0" data-pomo-body>
+      {renderRing(visible)}
+    </div>
+  );
+}
+
+/**
+ * Resolve a registered variant id from the props. Prefer the new `variant`
+ * prop; otherwise translate the legacy WidgetSize. Unknown values default to
+ * the registry's default `pomo-card`.
+ */
+function resolveVariantFromProps(
+  variant: WidgetVariant | undefined,
+  size: WidgetSize | undefined,
+): "pomo-compact" | "pomo-card" | "pomo-wide" {
+  if (variant === "pomo-compact" || variant === "pomo-wide" || variant === "pomo-card") {
+    return variant;
+  }
+  if (size === "wide" || size === "hero") return "pomo-wide";
+  if (size === "compact") return "pomo-compact";
+  return "pomo-card";
+}
+
+function CompactBody({
+  time,
+  secondsLeft,
+  total,
+  running,
+  accentColor,
+  onSwitch,
+  onToggle,
+  onReset,
+  mode,
+}: {
+  time: string;
+  secondsLeft: number;
+  total: number;
+  mode: PomodoroMode;
+  running: boolean;
+  accentColor: string;
+  onSwitch: (next: PomodoroMode) => void;
+  onToggle: () => void;
+  onReset: () => void;
+}) {
+  // Progress = elapsed / total (0..100). Fresh state has secondsLeft = total
+  // -> 0%, end -> 100%.
+  const elapsedPct = total > 0
+    ? Math.min(100, Math.max(0, ((total - secondsLeft) / total) * 100))
+    : 0;
+  // Single-row body: ModeSwitch + digits (flex-1) + ControlButtons. The 2 px
+  // progress bar is rendered as an absolute hairline pinned to the bottom of
+  // the body's relative box so it never consumes vertical layout space (this
+  // is what fixes the play/reset clip at 3×2). See
+  // docs/ux/explorations/2026-05-01-pomodoro-size-fix.md.
+  return (
+    <div className="relative flex h-full min-h-0 w-full items-center justify-between gap-2 overflow-hidden">
+      <ModeSwitch mode={mode} onSwitch={onSwitch} />
+      <span
+        data-testid="pomo-digits"
+        style={{ color: accentColor }}
+        className="shrink-0 whitespace-nowrap text-xl font-semibold tabular-nums leading-none tracking-tight"
+      >
+        {time}
+      </span>
+      <ControlButtons running={running} onToggle={onToggle} onReset={onReset} />
+      <div
+        role="progressbar"
+        aria-label="Pomodoro progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(elapsedPct)}
+        data-testid="pomo-progressbar"
+        className="absolute inset-x-0 bottom-0 h-[2px] overflow-hidden rounded-full bg-[color:var(--surface-strong)]"
+      >
+        <div
+          className="h-full rounded-full bg-[color:var(--accent)] transition-[width] duration-150"
+          style={{ width: `${elapsedPct}%` }}
         />
-      </div>
       </div>
     </div>
   );

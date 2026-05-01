@@ -3,8 +3,19 @@
 import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import * as React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { FiEdit3, FiGrid, FiMapPin, FiPlus, FiSettings, FiSun, FiX } from "react-icons/fi";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Responsive as ResponsiveGridLayout, type Layout } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import {
+  FiAlignJustify,
+  FiEdit3,
+  FiGrid,
+  FiMapPin,
+  FiPlus,
+  FiSettings,
+  FiSun,
+  FiX,
+} from "react-icons/fi";
 import { SearchBar } from "@/components/search/search-bar";
 import { FavoriteTile } from "@/components/homepage/favorite-tile";
 import { FavoriteEditor } from "@/components/homepage/favorite-editor";
@@ -12,10 +23,10 @@ import { SortableZone } from "@/components/homepage/sortable-zone";
 import { WidgetFrame } from "@/components/widgets/widget-frame";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { useHomeStore } from "@/stores/home-store";
-import type { Favorite, FavoriteInput, WidgetType, ZoneId } from "@/lib/types";
+import type { Favorite, FavoriteInput, HomeWidget, WidgetType, ZoneId } from "@/lib/types";
 import { useLocalEnvironment } from "@/hooks/use-local-environment";
 import { buildThemeVariables, getReadableTextPair, resolveContrast } from "@/lib/theme";
-import { widgetRegistry } from "@/components/widgets/widget-registry";
+import { widgetRegistry, getWidgetMeta } from "@/components/widgets/widget-registry";
 
 const widgetOptions: Array<{ type: WidgetType; label: string }> = (Object.keys(widgetRegistry) as WidgetType[]).map(
   (type) => ({ type, label: widgetRegistry[type].label }),
@@ -26,6 +37,37 @@ const zoneLabels: Record<ZoneId, string> = {
   favorites: "Favorites",
   workspace: "Workspace",
 };
+
+const BREAKPOINTS = { lg: 1024, md: 640, sm: 0 };
+const COLS = { lg: 12, md: 8, sm: 4 } as const;
+const ROW_HEIGHT = { lg: 80, md: 70, sm: 60 } as const;
+const MARGIN: Record<"lg" | "md" | "sm", readonly [number, number]> = {
+  lg: [12, 12],
+  md: [10, 10],
+  sm: [8, 8],
+};
+
+function widgetToLayoutItem(widget: HomeWidget) {
+  const meta = getWidgetMeta(widget.type);
+  const variant = meta.variants.find((v) => v.id === widget.variant) ?? meta.variants[0];
+  return {
+    i: widget.id,
+    x: widget.layout.x,
+    y: widget.layout.y,
+    w: widget.layout.w,
+    h: widget.layout.h,
+    minW: variant.minW,
+    minH: variant.minH,
+    maxW: variant.maxW,
+    maxH: variant.maxH,
+  };
+}
+
+function clampLayoutToCols(item: { x: number; w: number }, cols: number) {
+  const w = Math.min(item.w, cols);
+  const x = Math.min(item.x, Math.max(0, cols - w));
+  return { x, w };
+}
 
 export function HomePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -39,14 +81,14 @@ export function HomePage() {
   const updateFavorite = useHomeStore((state) => state.updateFavorite);
   const removeFavorite = useHomeStore((state) => state.removeFavorite);
   const addWidget = useHomeStore((state) => state.addWidget);
-  const reorderWidgets = useHomeStore((state) => state.reorderWidgets);
+  const setLayouts = useHomeStore((state) => state.setLayouts);
+  const compactWidgets = useHomeStore((state) => state.compactWidgets);
   const reorderFavorites = useHomeStore((state) => state.reorderFavorites);
   const reorderZones = useHomeStore((state) => state.reorderZones);
   const setZoneVisible = useHomeStore((state) => state.setZoneVisible);
   const setEditMode = useHomeStore((state) => state.setEditMode);
   const environment = useLocalEnvironment();
   const favoriteIds = useMemo(() => favorites.map((item) => item.id), [favorites]);
-  const widgetIds = useMemo(() => widgets.map((item) => item.id), [widgets]);
   const zoneSortableIds = useMemo(
     () => preferences.zoneOrder.map((zone) => `zone-${zone}`),
     [preferences.zoneOrder],
@@ -60,6 +102,31 @@ export function HomePage() {
       activationConstraint: { distance: 6 },
     }),
   );
+
+  // Track active grid breakpoint for mobile-disabled drag/resize.
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
+  const lastLayoutSigRef = useRef<string>("");
+  const [workspaceWidth, setWorkspaceWidth] = useState<number | null>(null);
+  const breakpoint: "lg" | "md" | "sm" = (() => {
+    const w = workspaceWidth ?? 1040;
+    if (w >= BREAKPOINTS.lg) return "lg";
+    if (w >= BREAKPOINTS.md) return "md";
+    return "sm";
+  })();
+
+  useEffect(() => {
+    if (!isMounted) return;
+    const node = workspaceRef.current;
+    if (!node) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry && entry.contentRect.width > 0) {
+        setWorkspaceWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(node);
+    return () => ro.disconnect();
+  }, [isMounted]);
 
   useEffect(() => {
     const hasWallpaper = Boolean(preferences.wallpaperImage);
@@ -86,6 +153,14 @@ export function HomePage() {
     setIsMounted(true);
   }, []);
 
+  // Toggle the edit-mode body class so the grid-paper background can react.
+  useEffect(() => {
+    document.body.classList.toggle("workspace-edit", preferences.editMode);
+    return () => {
+      document.body.classList.remove("workspace-edit");
+    };
+  }, [preferences.editMode]);
+
   const setDraggingClass = useCallback((active: boolean) => {
     document.body.classList.toggle("dnd-active", active);
   }, []);
@@ -102,10 +177,6 @@ export function HomePage() {
     }
     if (activeId.startsWith("fav") && overId.startsWith("fav")) {
       reorderFavorites(activeId, overId);
-      return;
-    }
-    if (activeId.startsWith("widget") && overId.startsWith("widget")) {
-      reorderWidgets(activeId, overId);
     }
   }
 
@@ -137,6 +208,51 @@ export function HomePage() {
     );
   }
 
+  // Build per-breakpoint layouts. For sm (mobile) we auto-stack by (y, x).
+  const desktopLayout: Layout = widgets.map(widgetToLayoutItem);
+  const mediumLayout: Layout = widgets.map((widget) => {
+    const item = widgetToLayoutItem(widget);
+    const clamped = clampLayoutToCols(item, COLS.md);
+    return { ...item, x: clamped.x, w: clamped.w };
+  });
+  const sortedForMobile = [...widgets].sort((a, b) =>
+    a.layout.y === b.layout.y ? a.layout.x - b.layout.x : a.layout.y - b.layout.y,
+  );
+  let cursorY = 0;
+  const smallLayout: Layout = sortedForMobile.map((widget) => {
+    const meta = getWidgetMeta(widget.type);
+    const variant = meta.variants.find((v) => v.id === widget.variant) ?? meta.variants[0];
+    const w = Math.min(COLS.sm, widget.layout.w);
+    const item = {
+      i: widget.id,
+      x: 0,
+      y: cursorY,
+      w,
+      h: widget.layout.h,
+      minW: variant.minW,
+      minH: variant.minH,
+      maxW: variant.maxW,
+      maxH: variant.maxH,
+    };
+    cursorY += widget.layout.h;
+    return item;
+  });
+
+  const editEnabled = preferences.editMode && breakpoint !== "sm";
+
+  function handleLayoutChange(currentLayout: Layout) {
+    if (!editEnabled) return;
+    // Persist only on lg/md (editEnabled is false on sm).
+    const next = currentLayout.map((item) => ({
+      id: item.i,
+      layout: { x: item.x, y: item.y, w: item.w, h: item.h },
+    }));
+    const sig = JSON.stringify(next);
+    if (sig === lastLayoutSigRef.current) return;
+    lastLayoutSigRef.current = sig;
+    setLayouts(next);
+  }
+
   const zoneContent: Record<ZoneId, React.ReactElement> = {
     search: (
       <section className="mx-auto mt-[9vh] w-full max-w-4xl text-center">
@@ -162,7 +278,7 @@ export function HomePage() {
       </section>
     ),
     favorites: (
-      <section className="mx-auto mt-9 w-full max-w-[1060px]">
+      <section className="mx-auto mt-9 w-full max-w-[1280px]">
         <div className="mb-3 flex items-center justify-between text-sm text-[color:var(--muted)]">
           <div className="flex items-center gap-2 font-semibold">
             <FiGrid />
@@ -203,14 +319,24 @@ export function HomePage() {
       </section>
     ),
     workspace: (
-      <section className="mx-auto mt-7 w-full max-w-[1060px]">
-        <div className="mb-3 flex items-center justify-between">
+      <section className="mx-auto mt-7 w-full max-w-[1280px]">
+        <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-medium text-[color:var(--muted)]">
             <FiGrid />
             Workspace
           </div>
           {preferences.editMode ? (
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => compactWidgets()}
+                title="Compact layout — pack widgets to the top"
+                aria-label="Compact widget layout"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-medium backdrop-blur transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+              >
+                <FiAlignJustify />
+                Compact
+              </button>
               {widgetOptions.map((option) => (
                 <button
                   key={option.type}
@@ -225,19 +351,71 @@ export function HomePage() {
             </div>
           ) : null}
         </div>
-        <SortableContext items={widgetIds} strategy={rectSortingStrategy}>
-          <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 ${
-            preferences.widgetScale === "compact"
-              ? "auto-rows-[132px]"
-              : preferences.widgetScale === "large"
-                ? "auto-rows-[184px]"
-                : "auto-rows-[156px]"
-          }`}>
-            {widgets.map((widget) => (
-              <WidgetFrame key={widget.id} widget={widget} scale={preferences.widgetScale} />
-            ))}
-          </div>
-        </SortableContext>
+        <div
+          ref={workspaceRef}
+          data-edit-mode={preferences.editMode ? "true" : "false"}
+          className={`workspace-grid relative rounded-[18px] ${
+            preferences.editMode ? "workspace-grid--edit" : ""
+          }`}
+        >
+          {widgets.length === 0 ? (
+            <div className="flex min-h-[180px] items-center justify-center p-6">
+              {preferences.editMode ? (
+                <div className="flex h-[180px] w-[320px] flex-col items-center justify-center gap-2 rounded-[18px] border-2 border-dashed border-[color:var(--border)] bg-transparent text-center">
+                  <FiPlus className="text-[28px] text-[color:var(--muted)]" />
+                  <p className="text-base font-medium text-[color:var(--ink)]">
+                    Add a widget to get started
+                  </p>
+                  <p className="text-sm text-[color:var(--muted)]">
+                    Pick from the tray above — or press <kbd className="px-1">A</kbd>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-[color:var(--muted)]">
+                  Turn on Edit to place widgets.
+                </p>
+              )}
+            </div>
+          ) : (
+            <ResponsiveGridLayout
+              className="workspace-rgl"
+              breakpoints={BREAKPOINTS}
+              cols={COLS}
+              rowHeight={ROW_HEIGHT[breakpoint]}
+              margin={MARGIN[breakpoint]}
+              width={workspaceWidth && workspaceWidth > 0 ? workspaceWidth : 1040}
+              compactor={undefined /* default = vertical */}
+              dragConfig={{
+                enabled: editEnabled,
+                bounded: false,
+                handle: ".widget-drag-handle",
+                cancel: ".widget-no-drag, button, [role='menu']",
+                threshold: 6,
+              }}
+              resizeConfig={{
+                enabled: editEnabled,
+                handles: ["se"],
+              }}
+              layouts={{ lg: desktopLayout, md: mediumLayout, sm: smallLayout }}
+              onLayoutChange={handleLayoutChange}
+              onDragStart={() => setDraggingClass(true)}
+              onDragStop={() => setDraggingClass(false)}
+              onResizeStart={() => setDraggingClass(true)}
+              onResizeStop={() => setDraggingClass(false)}
+            >
+              {widgets.map((widget) => (
+                <div key={widget.id} data-widget-id={widget.id}>
+                  <WidgetFrame widget={widget} scale={preferences.widgetScale} />
+                </div>
+              ))}
+            </ResponsiveGridLayout>
+          )}
+        </div>
+        {preferences.editMode && breakpoint === "sm" ? (
+          <p className="mt-2 text-center text-xs text-[color:var(--muted)]">
+            Open on a larger screen to rearrange widgets.
+          </p>
+        ) : null}
       </section>
     ),
   };

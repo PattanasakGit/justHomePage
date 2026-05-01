@@ -1,32 +1,33 @@
 import { describe, expect, it } from "vitest";
 import { createHomeStore, migrateHomeState } from "./home-store";
 import { getWidgetMeta } from "@/components/widgets/widget-registry";
-import type { HomeWidget } from "@/lib/types";
+import type { HomeWidget, WidgetType } from "@/lib/types";
+
+function rectOverlap(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+): boolean {
+  return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+}
 
 describe("home store", () => {
   it("adds and removes favorites", () => {
     const store = createHomeStore();
-
     store.getState().addFavorite({ title: "Docs", url: "https://docs.example.com", icon: "sparkles" });
     const favorite = store.getState().favorites.find((item) => item.title === "Docs");
-
     expect(favorite?.url).toBe("https://docs.example.com");
-
     store.getState().removeFavorite(favorite!.id);
-
     expect(store.getState().favorites.some((item) => item.id === favorite!.id)).toBe(false);
   });
 
   it("updates favorite fields", () => {
     const store = createHomeStore();
     const favorite = store.getState().favorites[0];
-
     store.getState().updateFavorite(favorite.id, {
       title: "Edited",
       url: "https://edited.example.com",
       icon: "github",
     });
-
     expect(store.getState().favorites[0]).toMatchObject({
       id: favorite.id,
       title: "Edited",
@@ -35,55 +36,76 @@ describe("home store", () => {
     });
   });
 
-  it("reorders widgets with stable ids", () => {
+  it("setVariant switches the widget's variant and layout dimensions", () => {
     const store = createHomeStore();
+    const clock = store.getState().widgets.find((w) => w.type === "clock")!;
+    store.getState().setVariant(clock.id, "clock-banner");
+    const updated = store.getState().widgets.find((w) => w.id === clock.id)!;
+    expect(updated.variant).toBe("clock-banner");
+    expect(updated.layout.w).toBe(4);
+    expect(updated.layout.h).toBe(1);
+  });
+
+  it("setVariant rejects unknown ids", () => {
+    const store = createHomeStore();
+    const clock = store.getState().widgets.find((w) => w.type === "clock")!;
+    const before = clock.variant;
+    store.getState().setVariant(clock.id, "not-a-variant");
+    expect(store.getState().widgets.find((w) => w.id === clock.id)!.variant).toBe(before);
+  });
+
+  it("setLayout writes free-placement coords", () => {
+    const store = createHomeStore();
+    const clock = store.getState().widgets.find((w) => w.type === "clock")!;
+    store.getState().setLayout(clock.id, { x: 5, y: 3, w: 3, h: 2 });
+    expect(store.getState().widgets.find((w) => w.id === clock.id)!.layout).toEqual({
+      x: 5,
+      y: 3,
+      w: 3,
+      h: 2,
+    });
+  });
+
+  it("compactWidgets removes vertical gaps but preserves x", () => {
+    const store = createHomeStore();
+    // Seed widgets at non-trivial positions
+    const ids = store.getState().widgets.map((w) => w.id);
+    store.getState().setLayout(ids[0], { x: 0, y: 5, w: 2, h: 2 });
+    store.getState().setLayout(ids[1], { x: 2, y: 9, w: 2, h: 2 });
+    store.getState().compactWidgets();
     const widgets = store.getState().widgets;
-
-    store.getState().reorderWidgets(widgets[0].id, widgets[2].id);
-
-    expect(store.getState().widgets[2].id).toBe(widgets[0].id);
+    // First widget should rest at y=0
+    expect(widgets[0].layout.y).toBe(0);
+    // Second widget x preserved
+    expect(widgets[1].layout.x).toBe(2);
+    expect(widgets[1].layout.y).toBe(0);
   });
 
-  it("resizes an individual widget within its allowed sizes", () => {
+  it("addWidget first-fits a placement that does not overlap existing", () => {
     const store = createHomeStore();
-    const clock = store.getState().widgets.find((widget) => widget.type === "clock");
-    expect(clock).toBeDefined();
-
-    store.getState().resizeWidget(clock!.id, "regular");
-
-    expect(store.getState().widgets.find((widget) => widget.id === clock!.id)?.size).toBe("regular");
-  });
-
-  it("ignores resize requests outside the widget's allowed sizes", () => {
-    const store = createHomeStore();
-    const clock = store.getState().widgets.find((widget) => widget.type === "clock");
-    expect(clock).toBeDefined();
-    const before = clock!.size;
-
-    store.getState().resizeWidget(clock!.id, "hero");
-
-    expect(store.getState().widgets.find((widget) => widget.id === clock!.id)?.size).toBe(before);
+    store.getState().addWidget("pomodoro");
+    const widgets = store.getState().widgets;
+    for (let i = 0; i < widgets.length; i++) {
+      for (let j = i + 1; j < widgets.length; j++) {
+        expect(rectOverlap(widgets[i].layout, widgets[j].layout)).toBe(false);
+      }
+    }
   });
 
   it("updates search and theme preferences", () => {
     const store = createHomeStore();
-
     store.getState().setSearchProvider("github");
     store.getState().setTheme("aurora");
-
     expect(store.getState().preferences.searchProvider).toBe("github");
     expect(store.getState().preferences.theme).toBe("aurora");
   });
 
   it("stores and clears a custom wallpaper image without changing theme", () => {
     const store = createHomeStore();
-
     store.getState().setTheme("sky");
     store.getState().setWallpaperImage("data:image/png;base64,abc");
-
     expect(store.getState().preferences.theme).toBe("sky");
     expect(store.getState().preferences.wallpaperImage).toBe("data:image/png;base64,abc");
-
     store.getState().setWallpaperImage(null);
     expect(store.getState().preferences.theme).toBe("sky");
     expect(store.getState().preferences.wallpaperImage).toBeNull();
@@ -91,51 +113,72 @@ describe("home store", () => {
 
   it("updates font preference", () => {
     const store = createHomeStore();
-
     store.getState().setFont("rounded");
-
     expect(store.getState().preferences.font).toBe("rounded");
   });
 
-  it("migrates persisted widget sizes from legacy v5 to v6", () => {
+  it("migrates v6 legacy sizes to v7 variants per the spec table", () => {
     const persisted = {
       widgets: [
-        { id: "w-clock", type: "clock", title: "Clock", size: "small", config: {} },
-        { id: "w-notes", type: "notes", title: "Note", size: "max", config: { body: "" } },
-        { id: "w-todo", type: "todo", title: "Today", size: "middle", config: { items: [] } },
-        { id: "w-pomo", type: "pomodoro", title: "Focus", size: "max", config: { focusMinutes: 25, breakMinutes: 5 } },
-        { id: "w-bookmark", type: "bookmark", title: "Pinned", size: "max", config: { url: "", caption: "", thumbnail: null } },
+        { id: "w-clock", type: "clock", title: "Clock", size: "compact", config: {} },
+        { id: "w-notes", type: "notes", title: "Note", size: "wide", config: { body: "" } },
+        { id: "w-todo", type: "todo", title: "Today", size: "regular", config: { items: [] } },
+        { id: "w-pomo", type: "pomodoro", title: "Focus", size: "wide", config: { focusMinutes: 25, breakMinutes: 5 } },
+        { id: "w-bookmark", type: "bookmark", title: "Pinned", size: "hero", config: { url: "", caption: "", thumbnail: null } },
       ],
     };
-
-    const next = migrateHomeState(persisted, 5) as { widgets: HomeWidget[] };
-
-    const byId = (id: string) => next.widgets.find((widget) => widget.id === id)!;
-    // small -> compact, middle -> regular, max -> wide; clamped per allowedSizes
-    expect(byId("w-clock").size).toBe("compact");
-    // notes does not allow "wide" (max -> wide -> not allowed) -> falls back to default (tall)
-    expect(byId("w-notes").size).toBe(getWidgetMeta("notes").defaultSize);
-    // todo allows regular -> middle stays regular
-    expect(byId("w-todo").size).toBe("regular");
-    // pomodoro allows wide -> max migrates to wide
-    expect(byId("w-pomo").size).toBe("wide");
-    // bookmark does not allow wide -> falls back to default (compact)
-    expect(byId("w-bookmark").size).toBe(getWidgetMeta("bookmark").defaultSize);
+    const next = migrateHomeState(persisted, 6) as { widgets: HomeWidget[] };
+    const byId = (id: string) => next.widgets.find((w) => w.id === id)!;
+    expect(byId("w-clock").variant).toBe("clock-square");
+    expect(byId("w-clock").layout).toMatchObject({ w: 2, h: 2 });
+    expect(byId("w-notes").variant).toBe("notes-strip");
+    expect(byId("w-notes").layout).toMatchObject({ w: 6, h: 2 });
+    expect(byId("w-todo").variant).toBe("todo-list");
+    expect(byId("w-pomo").variant).toBe("pomo-wide");
+    expect(byId("w-pomo").layout).toMatchObject({ w: 6, h: 3 });
+    expect(byId("w-bookmark").variant).toBe("bookmark-banner");
   });
 
-  it("falls back to defaultSize when migrated value is unknown", () => {
+  it("migration auto-packs to remove overlaps", () => {
     const persisted = {
       widgets: [
-        { id: "w-clock", type: "clock", title: "Clock", size: "alien", config: {} },
+        { id: "w1", type: "notes", title: "N", size: "wide", config: { body: "" } },
+        { id: "w2", type: "notes", title: "M", size: "wide", config: { body: "" } },
       ],
     };
+    const next = migrateHomeState(persisted, 6) as { widgets: HomeWidget[] };
+    const [a, b] = next.widgets;
+    expect(rectOverlap(a.layout, b.layout)).toBe(false);
+  });
+
+  it("migration backfills missing layout for v7+ widgets", () => {
+    const persisted = {
+      widgets: [
+        {
+          id: "w1",
+          type: "clock" as WidgetType,
+          title: "Clock",
+          variant: "clock-square",
+          config: {},
+        },
+      ],
+    };
+    const next = migrateHomeState(persisted, 7) as { widgets: HomeWidget[] };
+    expect(next.widgets[0].layout).toBeDefined();
+    expect(next.widgets[0].layout.w).toBe(2);
+  });
+
+  it("migration falls back to defaults for unknown legacy size", () => {
+    const persisted = {
+      widgets: [{ id: "w1", type: "clock", title: "Clock", size: "alien", config: {} }],
+    };
     const next = migrateHomeState(persisted, 5) as { widgets: HomeWidget[] };
-    expect(next.widgets[0].size).toBe(getWidgetMeta("clock").defaultSize);
+    const meta = getWidgetMeta("clock");
+    expect(next.widgets[0].variant).toBe(meta.defaultVariant);
   });
 
   it("updates visual tuning preferences", () => {
     const store = createHomeStore();
-
     store.getState().setThemeControls({
       accentColor: "#4f8cff",
       uiOpacity: 72,
@@ -144,7 +187,6 @@ describe("home store", () => {
       favoriteScale: "large",
       widgetScale: "compact",
     });
-
     expect(store.getState().preferences).toMatchObject({
       accentColor: "#4f8cff",
       uiOpacity: 72,

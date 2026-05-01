@@ -70,17 +70,17 @@
 
 ## Widgets Expansion
 
-- Unit (`src/components/widgets/widget-registry.test.ts`): every `WidgetType` has metadata; registry keys match the union; `defaultTitle` is non-empty; every widget exposes a duplicate-free `allowedSizes` from the known vocabulary; `defaultSize` is always a member of `allowedSizes`; multi-size widgets (`notes`, `pomodoro`, `todo`, `quickLinks`) expose at least 2 sizes.
+- Unit (`src/components/widgets/widget-registry.test.ts`): every `WidgetType` has metadata; registry keys match the union; `defaultTitle` is non-empty; every widget exposes a non-empty `variants` list; `defaultVariant` is always one of the variants; `resolveVariant` falls back to default for unknown ids; `legacySizeToVariantSpec` maps the documented v6 → v7 table for the seed cases.
 - Unit (`src/components/widgets/pomodoro-engine.test.ts`): initial state, start/pause, tick decrement, paused tick no-op, auto switch at zero, reset preserves mode, switchMode resets seconds, time formatter padding.
 - Unit (`src/components/widgets/todo-engine.test.ts`): trim-on-add, ignore empty, toggle by id, remove by id, clear-done filter.
 - Manual: add each new widget from edit mode → configure (set bookmark URL, set first todo, start pomodoro) → reload → state persists. Confirm Workspace DnD still reorders and sizes still respected.
 
-## Widget Polish (sizes + Quiet OS)
+## Widget Grid Layout (variants + free placement)
 
-- Unit (`src/components/widgets/size-cycle.test.ts`): `nextSize` advances + wraps; single-allowed list returns same; out-of-list current falls back to first allowed. `previousSize` mirrors the behaviour for `shift+r`.
-- Unit (`src/components/widgets/pomodoro-ring.test.tsx`): `computeRingDashOffset` is 0 at full remaining, full circumference at 0, half at 50%; rendered SVG has the full circumference dasharray + zero offset for `focus`/`full-remaining`, `4 6` dasharray for `break` mode.
-- Unit (`src/stores/home-store.test.ts`): persist v5 → v6 migration maps `small → compact`, `middle → regular`, `max → wide`; values not in a widget's `allowedSizes` (e.g. notes + `wide`) fall back to that widget's `defaultSize`; unknown legacy strings also fall back. `resizeWidget` rejects out-of-allowed sizes (no-op).
-- Manual: enter edit mode → for each widget cycle through every allowed size; confirm the cycle button's icon swaps to match the current size; confirm overflow popover (`⋯`) shows `Remove` and dismisses on Escape / outside-click; confirm the cycle button is hidden when only one size is allowed (no widgets currently expose this case but the rule is enforced in `widget-frame.tsx`).
+- Unit (`src/components/widgets/widget-variants.test.ts`): every widget exposes ≥3 variants; ids are unique within a widget; `defaultVariant` exists in the variants list; w/h are positive integers; `min ≤ default ≤ max` for both axes; the seed defaults (clock-square 2×2, date-square 2×2, weather-square 2×2, bookmark-tile 2×2, links-row 4×2, pomo-card 4×3, todo-list 4×4, notes-pad 4×4) match the spec table.
+- Unit (`src/stores/home-store.test.ts`): persist v6 → v7 migration maps each `(type, legacy size)` pair onto the correct variant + `{w, h}` (clock, notes, todo, pomodoro, bookmark cases); when two persisted widgets would overlap post-migration, `autoPack` resolves them to disjoint rectangles; widgets persisted at v7+ without a `layout` get the variant's `{w, h}` backfilled; unknown legacy size strings fall back to `defaultVariant`. `setVariant` rejects unknown variant ids (no-op + dev `console.warn`); `setLayout` writes the {x, y, w, h} verbatim; `compactWidgets` packs widgets to `y=0` (top) while preserving `x`; `addWidget` first-fits a placement that does not overlap existing widgets.
+- Component (`src/components/widgets/widget-frame.test.tsx`): the `⋯` overflow trigger only renders in edit mode; clicking it opens a `role="menu"` popover with `role="menuitemradio"` items (≥2 for clock); clicking a non-active variant updates `widgets[i].variant` in the store; the popover always includes a `Remove` menuitem.
+- Manual: enter edit mode → drag the clock by its header → release on a new cell → confirm `setLayouts` persisted the new `{x, y}`. Resize pomodoro 4×3 → drag corner to 6×4 → confirm RGL clamps to the variant's `maxW`/`maxH`. Click `⋯` on todo → switch to `todo-board` → confirm the widget grows to 6×5 and other widgets shift only where needed. Click **Compact** → all widgets pack to `y=0`. Remove a widget → others stay at their previous coords (no auto-reflow). On a tablet viewport (≈800 px) the workspace renders on the 8-col grid with drag/resize still on; below 640 px it falls back to a single-column auto-stack with drag/resize disabled.
 
 ### Widget size redesign (2026-05-01)
 
@@ -105,3 +105,23 @@ Manual matrix (must do before declaring polish work done):
 - Clock and date at `compact` AND `regular`: layouts must visibly differ — compact stacks vertically; regular adds a divider + right-column metadata.
 - Weather at `compact` AND `regular` including a forced error / blocked path: the footer must replace, not stack — body height stays constant.
 - On the `paper` theme with a forced near-white accent (`#ffff00`), hero digits across clock/date/weather/pomodoro must remain readable (rendered in `var(--ink)` instead of disappearing); accent decorations (ring, seconds bar, link dots, play button) keep the accent.
+
+### Pomodoro Size Fix (2026-05-01)
+
+Triggered by the bug "card focus timer มีปัญหาตอนปรับอิสระเป็นไซต์เล็ก" — at the smallest free-resize size the 88 px SVG ring overflowed `pomo-compact`, and `pomo-card` resized below 4×3 also collided. Brief: `docs/ux/explorations/2026-05-01-pomodoro-size-fix.md`.
+
+New tests (delta +9):
+
+- Unit (`src/components/widgets/widget-registry.test.ts`): `pomo-compact` clamps to `{ minW: 3, minH: 2, maxW: 5, maxH: 2 }`; `pomo-card` clamps to `{ minW: 4, minH: 3, maxW: 6, maxH: 4 }`; `pomo-wide` clamps to `{ minW: 6, minH: 3, maxW: 10, maxH: 4 }`. Each variant's default `(w, h)` falls inside its own clamps.
+- Component (`src/components/widgets/pomodoro-ring.test.tsx`): the universal parent-size guard. With a stubbed `ResizeObserver`, when the parent reports `min(w, h) − 24 < RING_SIZE_PX[size]` the component renders no `<svg>`; when the parent reports `min(w, h) − 24 ≥ RING_SIZE_PX[size]` the SVG renders. Covers `sm` (88) and `lg` (128).
+- Component (`src/components/widgets/widget-pomodoro.test.tsx`): per-variant body composition. `pomo-compact` renders no ring (`[data-testid='pomodoro-ring']` is null) and exposes a `role="progressbar"` element with `aria-valuemin=0`, `aria-valuemax=100`, and `aria-valuenow` matching the progress percent. **Single-row layout assertion** (replaces the prior 3-stack assertion): the body root is a flex row (className matches `/(^|\s)flex(\s|$)/` and does NOT match `/flex-col/`, plus `h-full`); ModeSwitch (parent of the `focus` tab button), the `[data-testid='pomo-digits']` element, and the ControlButtons cluster (parent of the play button) all share that single flex parent — no vertical stacking. `pomo-card` mounts a 88 px ring and a `[data-testid='pomo-controls']` right column whose className includes `grid-rows-[auto_auto]` and `justify-items-end`. `pomo-wide` mounts a 128 px ring and a `[data-testid='pomo-digits']` element with `text-4xl`.
+
+Manual matrix (must do before declaring this fix done):
+
+- Seed the workspace with one of each pomodoro variant (`pomo-compact`, `pomo-card`, `pomo-wide`). For each, verify visually:
+  - `pomo-compact`: SINGLE-ROW body — `[ focus/break tabs ] [ HH:MM digits ] [ play/reset ]` inline, with the 2 px accent progress bar pinned as an absolute hairline at the body's bottom edge. NO ring overflow and `article.scrollHeight === article.clientHeight` (no clipping of play/reset).
+  - `pomo-card`: 88 px ring left with digits inside, `focus/break` tabs above play/reset right.
+  - `pomo-wide`: 128 px ring left, `FOCUS` label + `text-4xl` digits centred, tabs above buttons right.
+- In edit mode, drag the resize corner: react-grid-layout must refuse to shrink below the variant's `minW × minH` (compact 3×2, card 4×3, wide 6×3) and refuse to grow past `maxW × maxH`.
+- `preview_console_logs` filtered to `error` returns no entries.
+- Theme matrix: `linen`, `paper`, `cyber`, `neonViolet`. Compact digits remain readable on every theme — on `paper` with a saturated near-white accent the digits must fall back to `var(--ink)` (verifies `useAccentTextColor`).
