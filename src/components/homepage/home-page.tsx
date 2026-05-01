@@ -28,6 +28,7 @@ import type { Favorite, FavoriteInput, HomeWidget, WidgetType, ZoneId } from "@/
 import { useLocalEnvironment } from "@/hooks/use-local-environment";
 import { buildThemeVariables, getReadableTextPair, resolveContrast } from "@/lib/theme";
 import { widgetRegistry, getWidgetMeta } from "@/components/widgets/widget-registry";
+import { mobileH } from "@/lib/mobile-layout";
 
 const widgetOptions: Array<{ type: WidgetType; label: string }> = (Object.keys(widgetRegistry) as WidgetType[]).map(
   (type) => ({ type, label: widgetRegistry[type].label }),
@@ -223,21 +224,25 @@ export function HomePage() {
   );
   let cursorY = 0;
   const smallLayout: Layout = sortedForMobile.map((widget) => {
-    const meta = getWidgetMeta(widget.type);
-    const variant = meta.variants.find((v) => v.id === widget.variant) ?? meta.variants[0];
-    const w = Math.min(COLS.sm, widget.layout.w);
+    // Force every mobile widget to a full-width strip; ignore the desktop
+    // variant width entirely. Row count is per-(type, variant) via `mobileH`.
+    const w = COLS.sm;
+    const h = mobileH(widget.type, widget.variant);
     const item = {
       i: widget.id,
       x: 0,
       y: cursorY,
       w,
-      h: widget.layout.h,
-      minW: variant.minW,
-      minH: variant.minH,
-      maxW: variant.maxW,
-      maxH: variant.maxH,
+      h,
+      // Strip the variant min/max — at <sm we own the box. Locking minW=4 also
+      // prevents the user (or any stray drag handler) from resizing below
+      // full-width even if the breakpoint flickers during a viewport change.
+      minW: COLS.sm,
+      minH: h,
+      maxW: COLS.sm,
+      maxH: h,
     };
-    cursorY += widget.layout.h;
+    cursorY += h;
     return item;
   });
 

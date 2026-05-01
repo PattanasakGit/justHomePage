@@ -154,6 +154,32 @@ describe("WidgetFrame mobile bodies", () => {
     expect(container.querySelector("[data-mobile-bookmark='true']")).not.toBeNull();
   });
 
+  it("at <sm in edit mode the header has NO inline Move up/down arrow buttons", () => {
+    withEditMode(true);
+    const widget = makeWidget("clock", "clock-square");
+    render(<WidgetFrame widget={widget} scale="cozy" />);
+    // Inline buttons (the FiArrowUp/FiArrowDown row) are no longer rendered.
+    // The button-role match excludes the menu-only items added inside the
+    // overflow popover.
+    expect(screen.queryByRole("button", { name: /^Move .* up$/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Move .* down$/i })).toBeNull();
+  });
+
+  it("at <sm in edit mode the overflow menu lists Move up, Move down, then Remove", () => {
+    withEditMode(true);
+    const widget = makeWidget("clock", "clock-square");
+    render(<WidgetFrame widget={widget} scale="cozy" />);
+    fireEvent.click(screen.getByLabelText(/More actions/i));
+    const items = screen.getAllByRole("menuitem");
+    const labels = items.map((el) => el.textContent?.trim() ?? "");
+    const moveUpIdx = labels.findIndex((t) => /move up/i.test(t));
+    const moveDownIdx = labels.findIndex((t) => /move down/i.test(t));
+    const removeIdx = labels.findIndex((t) => /remove/i.test(t));
+    expect(moveUpIdx).toBeGreaterThanOrEqual(0);
+    expect(moveDownIdx).toBeGreaterThan(moveUpIdx);
+    expect(removeIdx).toBeGreaterThan(moveDownIdx);
+  });
+
   it("at <sm caps todo and notes inner scroll at max-h-[40svh]", () => {
     const todo = makeWidget("todo", "todo-list");
     todo.config = { items: [] };

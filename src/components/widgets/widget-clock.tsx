@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { FiClock } from "react-icons/fi";
 import { formatClock } from "@/lib/date";
 import type { UIScale, WidgetSize } from "@/lib/types";
 import { useAccentTextColor } from "@/hooks/use-accent-text-color";
@@ -18,7 +19,15 @@ function formatTimezoneShort(timezone: string) {
   return tail.replace(/_/g, " ");
 }
 
-export function WidgetClock({ scale, size = "compact" }: { scale: UIScale; size?: WidgetSize }) {
+export function WidgetClock({
+  scale,
+  size = "compact",
+  isMobile = false,
+}: {
+  scale: UIScale;
+  size?: WidgetSize;
+  isMobile?: boolean;
+}) {
   const [now, setNow] = useState<Date | null>(null);
   const accentColor = useAccentTextColor();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local timezone";
@@ -35,6 +44,26 @@ export function WidgetClock({ scale, size = "compact" }: { scale: UIScale; size?
   const meridiem = now ? (now.getHours() >= 12 ? "PM" : "AM") : "—";
   const tzShort = formatTimezoneShort(timezone);
   const heroClass = heroScale[scale][size === "regular" ? "regular" : "compact"];
+
+  if (isMobile) {
+    // Landscape strip: identity glyph + city label + HH:MM right-aligned.
+    // Hero shrinks to text-3xl so it fits inside a 60 px row without clipping.
+    return (
+      <div
+        data-testid="mobile-row"
+        className="flex h-full min-h-0 items-center gap-3 px-3 py-2"
+      >
+        <FiClock className="shrink-0 text-[color:var(--accent)]" />
+        <span className="min-w-0 flex-1 truncate text-xs text-[color:var(--muted)]">{tzShort}</span>
+        <span
+          style={{ color: accentColor }}
+          className="ml-auto text-3xl font-semibold leading-none tabular-nums"
+        >
+          {time}
+        </span>
+      </div>
+    );
+  }
 
   if (size === "regular") {
     return (

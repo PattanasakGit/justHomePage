@@ -26,8 +26,14 @@
 - Favorites grid is `grid-cols-4` (iOS dock pattern).
 - Settings panel is a bottom sheet (`rounded-t-[28px]`, `max-h-[88svh]`) with a 36×4 muted drag indicator at the top center and a `pb-[env(safe-area-inset-bottom)]` floor for the home indicator. Backdrop click and Esc still dismiss.
 - Favorite editor is full-screen (`h-[100svh]`) with a sticky header (title + close) and a sticky footer (Save) that respects `safe-area-inset-bottom`. The icon picker switches to `grid-cols-6` and a `max-h-[40svh]` scroll cap so the form remains reachable when the iOS keyboard is up.
-- Edit-mode workspace chrome: drag/resize stay disabled (RGL `sm`), the inline 8-chip tray collapses behind a single "Add widget" trigger that opens a bottom sheet listing the same eight options. Each widget gains an inline `↑` and `↓` button row in its header (44×44) to swap y with its sm-stack neighbor; the muted "Open on a larger screen to rearrange widgets." hint sits **above** the canvas, not below. A footnote below the canvas reads "Workspace layout (drag/resize) is set on a larger screen."
-- Mobile widget bodies (auto-substituted regardless of variant): weather → single-line `[glyph] 28° · City`; pomodoro → `pomo-compact` (no ring); bookmark → launch-row (icon plate left, caption + host inline); todo and notes keep their full body but cap inner scroll at `max-h-[40svh]`. Clock and date and quickLinks reuse their existing compact compositions.
+- Edit-mode workspace chrome: drag/resize stay disabled (RGL `sm`), the inline 8-chip tray collapses behind a single "Add widget" trigger that opens a bottom sheet listing the same eight options. The header no longer carries inline `↑` / `↓` buttons — instead the **overflow popover** holds `Move up` / `Move down` (above `Remove`, each 44 px tall) so the strip's title row never gets eaten by chrome. The muted "Open on a larger screen to rearrange widgets." hint sits **above** the canvas, not below. A footnote below the canvas reads "Workspace layout (drag/resize) is set on a larger screen."
+- **Workspace strips:** every widget is full-width auto-stacked. Per-(type, variant) mobile heights compress to **1 / 2 / 4** cells via `mobileH(type, variant)` in `home-page.tsx`:
+  - 1 cell (≈60 px landscape strip): `clock-*`, `date-*`, `weather-*`, `bookmark-*`
+  - 2 cells (≈128 px): `pomodoro-*`, `quickLinks-*`
+  - 4 cells (≈248 px, internal scroll): `todo-*`, `notes-*`
+- Mobile widget bodies (auto-substituted regardless of variant): clock → `[FiClock] tz · HH:MM`; date → `[FiCalendar] weekday, month · DD`; weather → `[glyph] 28° · City`; bookmark → launch-row (icon plate left, caption + host inline); pomodoro → `pomo-compact` (no ring); todo and notes keep their full body but cap inner scroll at `max-h-[40svh]`. quickLinks reuses its existing compact composition.
+- Grid-paper backdrop is hidden below 640 px; `.workspace-grid--edit` resets `background-image` to `none` because drag/resize is off and the paper would be pure noise.
+- Widget chrome at `<sm`: tile padding shrinks to `p-2`; in view mode the widget header is hidden (the strip body already carries an icon + label + hero datum, so a duplicate "icon + title" row would steal the 60 px row). Edit mode keeps the header so the `⋯` trigger has a place to sit (44×44).
 
 ## Auto Text Contrast
 

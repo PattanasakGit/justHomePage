@@ -83,11 +83,20 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
   return (
     <article
       ref={articleRef}
-      className={`widget-frame relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] ${widgetScalePadding[scale]} shadow-sm ui-glass sm:shadow-tile`}
+      data-mobile-strip={isMobile ? "true" : "false"}
+      className={`widget-frame relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] ${
+        isMobile ? "p-2" : widgetScalePadding[scale]
+      } shadow-sm ui-glass sm:shadow-tile`}
       tabIndex={editMode ? 0 : -1}
     >
+      {/* On mobile, view-mode hides the header entirely — the strip body
+          already carries an identity glyph + label, so a duplicate "icon +
+          title" row would steal the full 60 px cell. Edit mode keeps the
+          header so the overflow trigger has somewhere to sit. */}
       <header
-        className={`widget-drag-handle mb-3 flex shrink-0 items-center justify-between gap-2 ${
+        className={`widget-drag-handle ${
+          isMobile ? (editMode ? "mb-1" : "hidden") : "mb-3"
+        } flex shrink-0 items-center justify-between gap-2 ${
           editMode ? "cursor-grab active:cursor-grabbing" : ""
         }`}
       >
@@ -97,34 +106,6 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
         </div>
         {editMode ? (
           <div className="widget-no-drag flex shrink-0 items-center gap-1">
-            {isMobile ? (
-              <>
-                <button
-                  type="button"
-                  aria-label={`Move ${widget.title} up`}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    moveWidgetUp(widget.id);
-                  }}
-                  className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
-                >
-                  <FiArrowUp />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Move ${widget.title} down`}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    moveWidgetDown(widget.id);
-                  }}
-                  className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
-                >
-                  <FiArrowDown />
-                </button>
-              </>
-            ) : null}
             <OverflowMenu
               widget={widget}
               variants={meta.variants}
@@ -133,6 +114,9 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
               onOpenChange={setMenuOpen}
               onPickVariant={(variantId) => setVariant(widget.id, variantId)}
               onRemove={() => removeWidget(widget.id)}
+              isMobile={isMobile}
+              onMoveUp={() => moveWidgetUp(widget.id)}
+              onMoveDown={() => moveWidgetDown(widget.id)}
             />
           </div>
         ) : null}
@@ -158,6 +142,9 @@ function OverflowMenu({
   onOpenChange,
   onPickVariant,
   onRemove,
+  isMobile,
+  onMoveUp,
+  onMoveDown,
 }: {
   widget: HomeWidget;
   variants: WidgetVariantSpec[];
@@ -166,6 +153,9 @@ function OverflowMenu({
   onOpenChange: (next: boolean) => void;
   onPickVariant: (variantId: string) => void;
   onRemove: () => void;
+  isMobile: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -215,7 +205,9 @@ function OverflowMenu({
           event.stopPropagation();
           onOpenChange(!open);
         }}
-        className="grid h-9 w-9 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+        className={`${
+          isMobile ? "h-11 w-11" : "h-9 w-9"
+        } grid place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]`}
       >
         <FiMoreHorizontal />
       </button>
@@ -274,6 +266,41 @@ function OverflowMenu({
               <div className="my-1 h-px w-full bg-[color:var(--border)]" />
             </>
           ) : null}
+          {isMobile ? (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenChange(false);
+                  onMoveUp();
+                }}
+                className="flex min-h-[44px] w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-medium text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+              >
+                <FiArrowUp />
+                Move up
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenChange(false);
+                  onMoveDown();
+                }}
+                className="flex min-h-[44px] w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-medium text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+              >
+                <FiArrowDown />
+                Move down
+              </button>
+              <div className="my-1 h-px w-full bg-[color:var(--border)]" />
+            </>
+          ) : null}
           <button
             type="button"
             role="menuitem"
@@ -284,7 +311,9 @@ function OverflowMenu({
               onOpenChange(false);
               onRemove();
             }}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-medium text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+            className={`flex ${
+              isMobile ? "min-h-[44px]" : ""
+            } w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-medium text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]`}
           >
             <FiTrash2 />
             Remove
@@ -340,9 +369,9 @@ function WidgetBody({
 
   switch (widget.type) {
     case "clock":
-      return <WidgetClock scale={scale} size={density} />;
+      return <WidgetClock scale={scale} size={density} isMobile={isMobile} />;
     case "date":
-      return <WidgetDate size={density} />;
+      return <WidgetDate size={density} isMobile={isMobile} />;
     case "notes":
       return (
         <div data-mobile-cap={isMobile ? "true" : "false"} className={isMobile ? "h-full max-h-[40svh] min-h-0" : "h-full min-h-0"}>

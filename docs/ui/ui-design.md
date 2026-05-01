@@ -132,14 +132,14 @@ When `variants.length === 1` the Size section is omitted (no dead affordance) �
 
 The widget set follows the "Quiet OS" direction (calm, type-led, one accent touch per tile):
 
-- **clock** — large `tabular-nums` HH:MM with a thin accent seconds bar.
-- **date** — oversized accent day-number with subdued weekday + month.
-- **notes** — minimal textarea framed by a single accent focus bar at the top (`--accent-soft` idle, `--accent` while focused).
+- **clock** — large `tabular-nums` HH:MM with a thin accent seconds bar (mobile: landscape strip — `[FiClock] tz · HH:MM` at `text-3xl`, see widget-clock).
+- **date** — oversized accent day-number with subdued weekday + month (mobile: landscape strip — `[FiCalendar] weekday, month · DD` at `text-3xl`, see widget-date).
+- **notes** — minimal textarea framed by a single accent focus bar at the top (`--accent-soft` idle, `--accent` while focused) (mobile: full body, inner scroll capped at `max-h-[40svh]`).
 - **quickLinks** — leading accent dot (HSL-rotated from `--accent`) before each link label.
 - **pomodoro** — circular SVG ring with explicit `size: sm | md | lg` (88 / 112 / 128 px); `stroke-dashoffset` animation; solid stroke for focus, dashed for break. The ring self-guards via `ResizeObserver`: when `min(parentW, parentH) − 24 < RING_SIZE_PX[size]`, the component renders nothing so the host can drop in a flat fallback. The `pomo-compact` variant never renders the ring; instead the body is a single horizontal flex row (mode tabs · digits · play/reset) and the 2 px accent progress bar is absolutely positioned at the bottom edge of the body so it does not consume vertical space. Body compositions that DO render the ring (`pomo-card`, `pomo-wide`) wrap it in an explicit `(ringSize + 24)` square slot so the ring observes a stable parent regardless of column auto-sizing.
-- **todo** — strip with a thin accent left edge (`--accent-soft` idle, `--accent` checked).
-- **weather** — accent-tinted temperature glyph; label `LOCAL WEATHER` uppercase; soft top-down `--accent-soft → transparent` gradient.
-- **bookmark** — light icon plate ring with caption underneath; in edit mode the inline form replaces the launch tile.
+- **todo** — strip with a thin accent left edge (`--accent-soft` idle, `--accent` checked) (mobile: full body, inner scroll capped at `max-h-[40svh]`).
+- **weather** — accent-tinted temperature glyph; label `LOCAL WEATHER` uppercase; soft top-down `--accent-soft → transparent` gradient (mobile: landscape strip — `[FiCloud] 28° · City`, see widget-frame `MobileWeatherBody`).
+- **bookmark** — light icon plate ring with caption underneath; in edit mode the inline form replaces the launch tile (mobile: launch-row — `[plate 44px] caption · host`, see widget-frame `MobileBookmarkRow`).
 
 ### Per-size composition rules (clock / date / weather / pomodoro / quickLinks)
 
