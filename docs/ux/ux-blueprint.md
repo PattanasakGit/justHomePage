@@ -19,6 +19,16 @@
 - Normal mode keeps chrome minimal.
 - Mobile layout stacks widgets and keeps tap targets at least 44px.
 
+## Mobile (<sm)
+
+- Greeting block stacks vertically: greeting line in `text-2xl`, then date row, then temp + location row. Timezone is hidden.
+- Search pill compresses to `min-h-[64px]`, `gap-2`, `px-4`. The `FiSliders` "search settings" button is hidden (TODO: no behavior yet); the provider chip becomes icon-only (icon + chevron). Provider dropdown clamps to `w-[min(92vw,360px)]` with `max-h-[60svh]` so the keyboard never covers it.
+- Favorites grid is `grid-cols-4` (iOS dock pattern).
+- Settings panel is a bottom sheet (`rounded-t-[28px]`, `max-h-[88svh]`) with a 36×4 muted drag indicator at the top center and a `pb-[env(safe-area-inset-bottom)]` floor for the home indicator. Backdrop click and Esc still dismiss.
+- Favorite editor is full-screen (`h-[100svh]`) with a sticky header (title + close) and a sticky footer (Save) that respects `safe-area-inset-bottom`. The icon picker switches to `grid-cols-6` and a `max-h-[40svh]` scroll cap so the form remains reachable when the iOS keyboard is up.
+- Edit-mode workspace chrome: drag/resize stay disabled (RGL `sm`), the inline 8-chip tray collapses behind a single "Add widget" trigger that opens a bottom sheet listing the same eight options. Each widget gains an inline `↑` and `↓` button row in its header (44×44) to swap y with its sm-stack neighbor; the muted "Open on a larger screen to rearrange widgets." hint sits **above** the canvas, not below. A footnote below the canvas reads "Workspace layout (drag/resize) is set on a larger screen."
+- Mobile widget bodies (auto-substituted regardless of variant): weather → single-line `[glyph] 28° · City`; pomodoro → `pomo-compact` (no ring); bookmark → launch-row (icon plate left, caption + host inline); todo and notes keep their full body but cap inner scroll at `max-h-[40svh]`. Clock and date and quickLinks reuse their existing compact compositions.
+
 ## Auto Text Contrast
 
 - Auto contrast keeps text readable across themes and uploaded wallpapers.

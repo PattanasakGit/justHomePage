@@ -22,6 +22,31 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 - Use stable dimensions for tiles and widgets.
 - Background upload previews through the page background layer with a subtle blur/veil for contrast.
 
+## Responsive ladder
+
+Three breakpoints, mapped 1:1 to Tailwind `sm` (640px) and `lg` (1024px). See [`docs/ux/specs/2026-05-01-responsive-polish.md`](../ux/specs/2026-05-01-responsive-polish.md).
+
+| Token / property | `<sm` (iPhone) | `≥sm` (iPad) | `≥lg` (MacBook) |
+|---|---|---|---|
+| Page padding | `px-3 py-3` | `px-6 py-4` | `px-10 py-4` |
+| Greeting type | `text-2xl` | `text-3xl` | `text-4xl` |
+| Search pill height | `min-h-[64px]` | `min-h-[78px]` | `min-h-[78px]` |
+| Search input text | `text-base` | `text-xl` | `text-xl` |
+| Favorites grid | `grid-cols-4` | `grid-cols-6` | `grid-cols-8` |
+| Card shadow | `shadow-sm` | `shadow-tile` | `shadow-tile` |
+| Card radius | `rounded-[18px]` | `rounded-[18px]` | `rounded-[18px]` |
+| Settings panel | bottom sheet (`rounded-t-[28px]`, `max-h-[88svh]`) | right drawer `m-3 rounded-[28px]` | right drawer `m-3 rounded-[28px]` |
+| Modals (favorite editor) | full-screen `h-[100svh]` with sticky save | centred `max-w-md` | centred `max-w-md` |
+| Icon picker grid | `grid-cols-6` | `grid-cols-7` | `grid-cols-7` |
+| Search-pill `FiSliders` | hidden | visible (no-op TODO) | visible (no-op TODO) |
+| Provider chip label | hidden (icon + chevron only) | visible | visible |
+
+Brand icon plates remain the documented `bg-white/*` exception — never replicate that for new components. All other surfaces stay on tokens.
+
+Touch targets at `<sm` are sized to ≥44×44 (WCAG 2.5.5): provider chip `h-11 min-h-11`, header buttons `h-11 w-11`, settings tile rows `min-h-12`.
+
+A `useMediaQuery('(max-width: 639.98px)')` hook in `src/hooks/use-media-query.ts` powers branches that pure CSS cannot express (full-screen modal vs centered card, mobile-only widget bodies, single "Add widget" sheet replacing the inline 8-chip tray).
+
 ## Theme Catalog
 
 - Themes live in `src/data/themes.ts` as a single `themeCatalog` array; each entry has `category` (`light`/`dark`), `style` (`soft`/`minimal`/`vibrant`/`neon`), a Tailwind preview gradient, and a curated `accents` palette.

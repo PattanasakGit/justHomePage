@@ -87,3 +87,9 @@ Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `
 - After per-widget upgrades, `autoPack(widgets)` runs a first-fit top-left scan in array order so any leftover overlap from legacy snapshots is resolved.
 - The 12-col grid is the canonical surface; tablet (`md`, 8 cols) and mobile (`sm`, 4 cols) are derived layouts (`mediumLayout`, `smallLayout`) on each render.
 - `react-grid-layout` (`Responsive` component) is the workspace surface; favorites and zones still use `@dnd-kit`. The two libraries do not interact — RGL only owns the workspace zone interior.
+
+## Responsive helpers (2026-05-01)
+
+- `src/hooks/use-media-query.ts` — SSR-safe `matchMedia` subscription. Returns `false` on the server for stable hydration, then subscribes to live `change` events. Components that need a behavior split that pure CSS cannot express (modal vs full-screen, mobile-only widget body) call `useMediaQuery('(max-width: 639.98px)')`. Pure CSS responsive utilities (Tailwind `sm:` / `lg:`) are still preferred for spacing, typography, and grid columns.
+- Home-store actions `moveWidgetUp(id)` and `moveWidgetDown(id)` swap the y of the target widget with the previous / next neighbor in sm-stack ordering (sorted by `(y, x)`). They power the per-widget `↑ ↓` reorder buttons that replace drag/resize at `<sm`. Both are no-ops when the target is already at the boundary; they do not pack other widgets.
+
