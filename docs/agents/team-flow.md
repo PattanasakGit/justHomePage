@@ -1,6 +1,8 @@
 # Team Flow
 
-The project uses a 6-agent team defined under [.claude/agents](../../.claude/agents). Every user request flows through `project-owner`, which dispatches specialists in the right order.
+The project uses a 6-agent team defined under [.claude/agents](../../.claude/agents). Those files are the source of truth for both Claude and Codex sessions. Every user request flows through the `project-owner` workflow, which dispatches specialists in the right order.
+
+Codex note: Codex may not expose Claude Code's exact `Task` tool or custom `.claude/agents` runtime. When that happens, Codex still follows the same project-owner intake, planning, dispatch, verification, and reporting loop, using native subagents only when available.
 
 ## Cast
 
