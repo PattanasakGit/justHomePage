@@ -52,7 +52,90 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 
 ## Widgets
 
-- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, size buttons, remove) and dispatches body rendering by type.
-- All widgets use theme tokens (`--accent`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` (the brand-icon plate exception still applies).
+- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, cycle resize, overflow popover) and dispatches body rendering by type.
+- All widgets use theme tokens (`--accent`, `--accent-soft`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` outside two documented exceptions: the favorite tile brand-icon plate and the bookmark widget plate.
 - Pomodoro uses `tabular-nums` for the timer display so digit width stays steady.
-- Bookmark thumbnail uses a `--surface-strong` plate; falls back to a `FiBookmark` glyph when no metadata is fetched yet.
+- Bookmark thumbnail uses a light brand-icon plate (the documented exception); falls back to a `FiBookmark` glyph when no metadata is fetched yet.
+
+### Size vocabulary (per-widget)
+
+Five size ids share a Tailwind class map:
+
+| id | sm span | lg span | row-span | typical use |
+|----|---------|---------|----------|-------------|
+| `compact` | 1 | 1 | 1 (see exceptions) | single metric |
+| `regular` | 2 | 2 | 1 (see exceptions) | label + body |
+| `wide` | 2 | 4 | 1 (see exceptions) | timeline / horizontal list |
+| `tall` | 1 | 2 | 2 | editor / scroll list |
+| `hero` | 2 | 4 | 2 | rich panel |
+
+Each widget exposes a curated `allowedSizes: WidgetSize[]` and a `defaultSize` (defined in `src/components/widgets/widget-registry.ts`). `defaultSize` is always a member of `allowedSizes`. The `home-store` `resizeWidget` action rejects (no-op + dev `console.warn`) sizes outside the widget's allowed list.
+
+#### Per-(type, size) row-span exceptions
+
+A handful of (widget type, size) pairs cannot fit their composed body inside the ~156 px row height that the grid otherwise allocates when a 1-row sibling pins the row. For those pairs `widget-frame.tsx` adds an extra `lg:row-span-2` via the `bodyRowSpan(type, size)` lookup (`rowSpanOverride` table) so the grid hands the card a second row at `lg+`. The exception list is intentionally small and per-cell, never per-size globally:
+
+| type | size | row-span |
+|---|---|---|
+| `clock` | `regular` | `lg:row-span-2` (Bangkok-class tz line was clipping) |
+| `weather` | `compact` | `lg:row-span-2` (`Allow location` footer was clipping) |
+| `weather` | `regular` | `lg:row-span-2` (left-column hero + footer) |
+| `pomodoro` | `wide` | `lg:row-span-2` (128 px ring + play row) |
+
+Below the `lg` breakpoint (and on the cells not listed above) the original 1-row span still applies. Bake new exceptions into this table in `widget-frame.tsx` — never inside individual widget bodies.
+
+### Cycle resize control + overflow popover
+
+In edit mode, each widget header shows two trailing controls:
+
+1. A single **cycle button** that advances through `allowedSizes` (icon mapping: `compact → FiSquare`, `regular → FiColumns`, `wide → FiMinus`, `tall → FiBookOpen`, `hero → FiMaximize2`). When `allowedSizes.length === 1` the button is **not rendered** (no dead affordance). The button label includes the current size; `r` keypress while the article holds focus cycles forward.
+2. An **overflow trigger** (`⋯` / `FiMoreHorizontal`) that opens a small popover (`--popup` background) with theme-token menu items. Today only `Remove` is rendered; widget-specific `Settings…` items will appear here in the future and are simply omitted when no settings exist.
+
+Both trailing buttons stop pointer propagation so they do not initiate `@dnd-kit` drag.
+
+### Quiet OS hero language
+
+The widget set follows the "Quiet OS" direction (calm, type-led, one accent touch per tile):
+
+- **clock** — large `tabular-nums` HH:MM with a thin accent seconds bar.
+- **date** — oversized accent day-number with subdued weekday + month.
+- **notes** — minimal textarea framed by a single accent focus bar at the top (`--accent-soft` idle, `--accent` while focused).
+- **quickLinks** — leading accent dot (HSL-rotated from `--accent`) before each link label.
+- **pomodoro** — circular SVG ring with explicit `size: sm | md | lg` (88 / 112 / 128 px); `stroke-dashoffset` animation; solid stroke for focus, dashed for break.
+- **todo** — strip with a thin accent left edge (`--accent-soft` idle, `--accent` checked).
+- **weather** — accent-tinted temperature glyph; label `LOCAL WEATHER` uppercase; soft top-down `--accent-soft → transparent` gradient.
+- **bookmark** — light icon plate ring with caption underneath; in edit mode the inline form replaces the launch tile.
+
+### Per-size composition rules (clock / date / weather / pomodoro / quickLinks)
+
+Each widget body is laid out per `allowedSize` so content always fits the
+card. The frame's `article` is `flex flex-col min-h-0 overflow-hidden`; every
+body root uses `flex h-full min-h-0 flex-col` so internal scroll regions
+report finite height (see `docs/agents/knowledge-rules.md` for the global
+rule). Bodies never grow beyond the card; overflow becomes a scroll region
+or replaces an in-place footer.
+
+| widget | size | composition |
+|---|---|---|
+| clock | compact | HH:MM hero stacked over a 2 px accent seconds bar; bottom row carries short weekday + short timezone (e.g. `FRI · Bangkok`). No seconds string. |
+| clock | regular | `grid-cols-[1fr_auto_auto]` baseline grid: HH:MM hero left, vertical hairline divider, right column = AM/PM tag + short weekday + short timezone. Seconds bar spans the full width below. |
+| date | compact | Oversized day digit (`text-6xl`), short weekday (`text-[11px] uppercase`), short month. |
+| date | regular | `grid-cols-[auto_1fr]`: day digit (`text-7xl`) on the left, `border-l` divider, weekday (long) + month + year stacked right. |
+| weather | compact | 4 stacked lines: `LOCAL WEATHER` label, temp+`C` hero, condition word, footer. The footer slot (`data-testid="weather-footer"`) is **replaced in place** when blocked/error — never appended — so card height is constant. |
+| weather | regular | `grid-cols-[auto_1fr]`: temp+`C` hero on the left, condition / location stacked right. Same in-place footer rule applies; while error/blocked, the right-column secondary line collapses to keep total height stable. |
+| pomodoro | regular | `flex items-center gap-4`: 88 px ring left (`shrink-0`), digits inside the ring, controls (`ModeSwitch` over play/reset row) on the right, end-aligned. |
+| pomodoro | wide | `grid-cols-[auto_1fr_auto] items-center gap-6`: 128 px ring left, mode label + `text-4xl` time centred, mode pill over play/reset right. |
+| quickLinks | regular | `grid-cols-1` scrollable list with `mask-image` fade on the bottom 16 px; ~4 visible at typical card height, scrolls beyond. |
+| quickLinks | wide | `grid-cols-2` scrollable grid with the same fade mask; ~8 visible, scrolls beyond. |
+
+### Accent readability fallback for hero digits
+
+`accentReadsOnLight(color)` (in `src/lib/theme.ts`) returns `false` when an
+accent's relative luminance exceeds `0.85` (e.g. saturated yellow on the
+`paper` theme). Widgets that fill large numerals with the accent — clock
+HH:MM, date day-number, weather temp, pomodoro digits — pipe through
+`useAccentTextColor()` (in `src/hooks/use-accent-text-color.ts`), which
+swaps the inline `color` to `var(--ink)` whenever the active accent would
+disappear on a near-white surface. The accent still drives every other
+decoration (ring stroke, seconds bar, link dot, play button) so the theme
+remains visually present.

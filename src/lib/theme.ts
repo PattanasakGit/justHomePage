@@ -28,6 +28,42 @@ function rgba(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
 }
 
+/**
+ * Approximate relative luminance of a color in the 0–1 range.
+ * Uses the WCAG-style channel weighting (linearised RGB).
+ */
+function relativeLuminance(hex: string): number | null {
+  const match = hex.trim().match(HEX_RE);
+  if (!match) return null;
+  const channel = (raw: number) => {
+    const v = raw / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  const r = channel(Number.parseInt(match[1], 16));
+  const g = channel(Number.parseInt(match[2], 16));
+  const b = channel(Number.parseInt(match[3], 16));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+const ACCENT_LIGHT_THRESHOLD = 0.85;
+
+/**
+ * Whether the given accent colour is dark enough to remain legible when
+ * used as fill on a near-white surface (e.g. the `paper` theme tile).
+ *
+ * Returns `false` only when the accent's relative luminance exceeds
+ * {@link ACCENT_LIGHT_THRESHOLD} (≈ pastel yellow on white), which is the
+ * cue for hero digits to fall back to `var(--ink)` instead.
+ *
+ * Malformed input is treated as "safe to use" — we don't want a parsing
+ * miss to silently strip accent colour everywhere.
+ */
+export function accentReadsOnLight(color: string): boolean {
+  const luminance = relativeLuminance(color);
+  if (luminance === null) return true;
+  return luminance <= ACCENT_LIGHT_THRESHOLD;
+}
+
 export function getReadableTextPair(contrast: Exclude<ContrastMode, "auto">) {
   if (contrast === "light") {
     return { ink: "#f7faf6", muted: "#d8e0dc", inkInverse: "#17201b" };

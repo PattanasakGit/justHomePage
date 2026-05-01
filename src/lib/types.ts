@@ -103,7 +103,7 @@ export type WidgetConfigByType = {
   bookmark: BookmarkConfig;
 };
 
-export type WidgetSize = "small" | "middle" | "max";
+export type WidgetSize = "compact" | "regular" | "wide" | "tall" | "hero";
 
 export type ZoneId = "search" | "favorites" | "workspace";
 
