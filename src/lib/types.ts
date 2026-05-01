@@ -55,6 +55,8 @@ export type WidgetType = "clock" | "date" | "notes" | "quickLinks";
 
 export type WidgetSize = "small" | "middle" | "max";
 
+export type ZoneId = "search" | "favorites" | "workspace";
+
 export type Favorite = {
   id: string;
   title: string;
@@ -86,4 +88,6 @@ export type Preferences = {
   favoriteScale: UIScale;
   widgetScale: UIScale;
   editMode: boolean;
+  zoneOrder: ZoneId[];
+  zoneVisibility: Record<ZoneId, boolean>;
 };

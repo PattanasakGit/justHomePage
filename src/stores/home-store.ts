@@ -16,6 +16,7 @@ import type {
   SearchProviderId,
   WidgetSize,
   WidgetType,
+  ZoneId,
 } from "@/lib/types";
 
 export type HomeState = {
@@ -37,6 +38,10 @@ export type HomeState = {
   setFont: (font: FontId) => void;
   setThemeControls: (controls: Partial<Pick<Preferences, "accentColor" | "uiOpacity" | "blur" | "contrast" | "favoriteScale" | "widgetScale">>) => void;
   setEditMode: (editMode: boolean) => void;
+  setZoneOrder: (order: ZoneId[]) => void;
+  setZoneVisible: (zone: ZoneId, visible: boolean) => void;
+  reorderZones: (activeId: string, overId: string) => void;
+  resetZones: () => void;
 };
 
 const makeId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -117,6 +122,38 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
   setFont: (font) => set((state) => ({ preferences: { ...state.preferences, font } })),
   setThemeControls: (controls) => set((state) => ({ preferences: { ...state.preferences, ...controls } })),
   setEditMode: (editMode) => set((state) => ({ preferences: { ...state.preferences, editMode } })),
+  setZoneOrder: (order) =>
+    set((state) => ({ preferences: { ...state.preferences, zoneOrder: order } })),
+  setZoneVisible: (zone, visible) =>
+    set((state) => ({
+      preferences: {
+        ...state.preferences,
+        zoneVisibility: { ...state.preferences.zoneVisibility, [zone]: visible },
+      },
+    })),
+  reorderZones: (activeId, overId) =>
+    set((state) => {
+      const stripPrefix = (id: string) => (id.startsWith("zone-") ? id.slice(5) : id) as ZoneId;
+      const active = stripPrefix(activeId);
+      const over = stripPrefix(overId);
+      const oldIndex = state.preferences.zoneOrder.indexOf(active);
+      const newIndex = state.preferences.zoneOrder.indexOf(over);
+      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return state;
+      return {
+        preferences: {
+          ...state.preferences,
+          zoneOrder: arrayMove(state.preferences.zoneOrder, oldIndex, newIndex),
+        },
+      };
+    }),
+  resetZones: () =>
+    set((state) => ({
+      preferences: {
+        ...state.preferences,
+        zoneOrder: [...defaultPreferences.zoneOrder],
+        zoneVisibility: { ...defaultPreferences.zoneVisibility },
+      },
+    })),
 });
 
 export function createHomeStore() {
@@ -126,7 +163,7 @@ export function createHomeStore() {
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 4,
+    version: 5,
     migrate: (persisted) => {
       const state = persisted as Partial<HomeState> & {
         preferences?: Partial<Preferences> & {
@@ -153,6 +190,8 @@ export const useHomeStore = create<HomeState>()(
           contrast: state.preferences.contrast ?? defaultPreferences.contrast,
           favoriteScale: state.preferences.favoriteScale ?? defaultPreferences.favoriteScale,
           widgetScale: state.preferences.widgetScale ?? defaultPreferences.widgetScale,
+          zoneOrder: state.preferences.zoneOrder ?? [...defaultPreferences.zoneOrder],
+          zoneVisibility: state.preferences.zoneVisibility ?? { ...defaultPreferences.zoneVisibility },
         },
       } as HomeState;
     },

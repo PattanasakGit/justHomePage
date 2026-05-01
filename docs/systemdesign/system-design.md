@@ -58,3 +58,11 @@ Drag/drop performance notes:
 ## Vercel SQLite Caveat
 
 Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `DATABASE_URL` for production.
+
+## Zone Layout (Preferences v5)
+
+- `Preferences.zoneOrder: ZoneId[]` — order of `"search" | "favorites" | "workspace"`.
+- `Preferences.zoneVisibility: Record<ZoneId, boolean>` — per-zone visibility flag.
+- Persisted store version bumped from 4 → 5. The migration backfills both fields with defaults so any v4 snapshot keeps working without resetting other preferences.
+- Store actions: `setZoneOrder`, `setZoneVisible(zone, visible)`, `reorderZones(activeId, overId)` (accepts `zone-` prefixed dnd-kit ids), `resetZones`.
+- DnD routing in `home-page.tsx` discriminates by id prefix: `zone-` → `reorderZones`, `fav` → `reorderFavorites`, `widget` → `reorderWidgets`.
