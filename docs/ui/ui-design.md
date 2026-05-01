@@ -63,13 +63,26 @@ Five size ids share a Tailwind class map:
 
 | id | sm span | lg span | row-span | typical use |
 |----|---------|---------|----------|-------------|
-| `compact` | 1 | 1 | 1 | single metric |
-| `regular` | 2 | 2 | 1 | label + body |
-| `wide` | 2 | 4 | 1 | timeline / horizontal list |
+| `compact` | 1 | 1 | 1 (see exceptions) | single metric |
+| `regular` | 2 | 2 | 1 (see exceptions) | label + body |
+| `wide` | 2 | 4 | 1 (see exceptions) | timeline / horizontal list |
 | `tall` | 1 | 2 | 2 | editor / scroll list |
 | `hero` | 2 | 4 | 2 | rich panel |
 
 Each widget exposes a curated `allowedSizes: WidgetSize[]` and a `defaultSize` (defined in `src/components/widgets/widget-registry.ts`). `defaultSize` is always a member of `allowedSizes`. The `home-store` `resizeWidget` action rejects (no-op + dev `console.warn`) sizes outside the widget's allowed list.
+
+#### Per-(type, size) row-span exceptions
+
+A handful of (widget type, size) pairs cannot fit their composed body inside the ~156 px row height that the grid otherwise allocates when a 1-row sibling pins the row. For those pairs `widget-frame.tsx` adds an extra `lg:row-span-2` via the `bodyRowSpan(type, size)` lookup (`rowSpanOverride` table) so the grid hands the card a second row at `lg+`. The exception list is intentionally small and per-cell, never per-size globally:
+
+| type | size | row-span |
+|---|---|---|
+| `clock` | `regular` | `lg:row-span-2` (Bangkok-class tz line was clipping) |
+| `weather` | `compact` | `lg:row-span-2` (`Allow location` footer was clipping) |
+| `weather` | `regular` | `lg:row-span-2` (left-column hero + footer) |
+| `pomodoro` | `wide` | `lg:row-span-2` (128 px ring + play row) |
+
+Below the `lg` breakpoint (and on the cells not listed above) the original 1-row span still applies. Bake new exceptions into this table in `widget-frame.tsx` — never inside individual widget bodies.
 
 ### Cycle resize control + overflow popover
 

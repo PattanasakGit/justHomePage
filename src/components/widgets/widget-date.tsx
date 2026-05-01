@@ -14,7 +14,7 @@ export function WidgetDate({ size = "compact" }: { size?: WidgetSize }) {
 
   if (size === "regular") {
     return (
-      <div className="flex h-full min-h-0 items-stretch">
+      <div className="flex h-full min-h-0 flex-col items-stretch overflow-hidden">
         <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr] items-center gap-4">
           <div
             style={{ color: accentColor }}
@@ -35,7 +35,7 @@ export function WidgetDate({ size = "compact" }: { size?: WidgetSize }) {
 
   // compact — oversized day, short weekday, short month.
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <span
         style={{ color: accentColor }}
         className="text-6xl font-bold leading-none tabular-nums tracking-tight"

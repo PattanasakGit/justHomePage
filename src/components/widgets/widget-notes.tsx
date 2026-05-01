@@ -23,7 +23,7 @@ export function WidgetNotes({
   const [focused, setFocused] = useState(false);
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
       <div
         aria-hidden
         className={`pointer-events-none absolute inset-x-0 top-0 h-[2px] rounded-full transition ${
@@ -37,7 +37,7 @@ export function WidgetNotes({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         placeholder="Drop a thought. Autosaves locally."
-        className={`${heightBySize[size]} mt-2 w-full flex-1 resize-none bg-transparent p-1 text-sm leading-6 text-[color:var(--ink)] placeholder:text-[color:var(--muted)] outline-none`}
+        className={`${heightBySize[size]} mt-2 w-full min-h-0 flex-1 resize-none bg-transparent p-1 text-sm leading-6 text-[color:var(--ink)] placeholder:text-[color:var(--muted)] outline-none`}
       />
     </div>
   );

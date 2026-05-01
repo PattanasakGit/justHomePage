@@ -12,7 +12,7 @@ export function WidgetQuickLinks({ value, size = "regular" }: { value: string; s
 
   if (links.length === 0) {
     return (
-      <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="grid h-full place-items-center rounded-2xl border border-dashed border-[color:var(--border)] p-3 text-center text-xs text-[color:var(--muted)]">
           Add links in settings — they appear as launch pills.
         </div>
@@ -24,7 +24,7 @@ export function WidgetQuickLinks({ value, size = "regular" }: { value: string; s
   const gridCols = size === "wide" ? "grid-cols-2" : "grid-cols-1";
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <ul
         data-testid="quick-links-scroll"
         className={`grid ${gridCols} min-h-0 flex-1 gap-2 overflow-y-auto pr-1 [mask-image:linear-gradient(to_bottom,black_calc(100%-16px),transparent)]`}

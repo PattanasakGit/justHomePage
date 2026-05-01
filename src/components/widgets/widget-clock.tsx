@@ -38,7 +38,7 @@ export function WidgetClock({ scale, size = "compact" }: { scale: UIScale; size?
 
   if (size === "regular") {
     return (
-      <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="grid min-h-0 flex-1 grid-cols-[1fr_auto_auto] items-baseline gap-4">
           <div
             style={{ color: accentColor }}
@@ -71,7 +71,7 @@ export function WidgetClock({ scale, size = "compact" }: { scale: UIScale; size?
 
   // compact — vertical stack; hero, accent seconds bar, short-form secondary line.
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <div
         style={{ color: accentColor }}
         className={`${heroClass} font-semibold leading-none tracking-tight tabular-nums`}

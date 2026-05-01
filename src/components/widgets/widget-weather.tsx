@@ -49,7 +49,7 @@ export function WidgetWeather({ size = "compact" }: { size?: WidgetSize }) {
 
   if (size === "regular") {
     return (
-      <div className="relative flex h-full min-h-0 flex-col">
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[12px] bg-gradient-to-b from-[color:var(--accent-soft)] to-transparent opacity-60"

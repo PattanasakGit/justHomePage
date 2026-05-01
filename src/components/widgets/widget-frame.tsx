@@ -30,6 +30,7 @@ import type {
   TodoItem,
   UIScale,
   WidgetSize,
+  WidgetType,
 } from "@/lib/types";
 import { useHomeStore } from "@/stores/home-store";
 
@@ -46,6 +47,21 @@ const sizeSpanClass: Record<WidgetSize, string> = {
   tall: "lg:col-span-2 row-span-2",
   hero: "sm:col-span-2 lg:col-span-4 row-span-2",
 };
+
+// Per-(type, size) row-span exceptions. Some widgets need a taller row at
+// non-tall sizes because their internal layouts (e.g. pomodoro's lg ring,
+// weather's footer, clock's tz line) overflow the ~156px row height the
+// grid otherwise allocates. Keeping this exception table next to
+// sizeSpanClass means the widget bodies stay layout-agnostic.
+const rowSpanOverride: Partial<Record<WidgetType, Partial<Record<WidgetSize, string>>>> = {
+  clock: { regular: "lg:row-span-2" },
+  weather: { compact: "lg:row-span-2", regular: "lg:row-span-2" },
+  pomodoro: { wide: "lg:row-span-2" },
+};
+
+function bodyRowSpan(type: WidgetType, size: WidgetSize): string {
+  return rowSpanOverride[type]?.[size] ?? "";
+}
 
 const sizeLabel: Record<WidgetSize, string> = {
   compact: "Compact",
@@ -71,7 +87,7 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id });
   const meta = getWidgetMeta(widget.type);
   const Icon = meta.icon;
-  const span = sizeSpanClass[widget.size] ?? "";
+  const span = `${sizeSpanClass[widget.size] ?? ""} ${bodyRowSpan(widget.type, widget.size)}`.trim();
   const canCycle = meta.allowedSizes.length > 1;
 
   const articleRef = useRef<HTMLElement | null>(null);

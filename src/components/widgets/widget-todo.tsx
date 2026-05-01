@@ -26,7 +26,7 @@ export function WidgetTodo({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <form onSubmit={onSubmit} className="flex items-center gap-2">
         <input
           type="text"
@@ -44,7 +44,7 @@ export function WidgetTodo({
           <FiPlus />
         </button>
       </form>
-      <ul className={`mt-3 flex-1 space-y-1 overflow-y-auto ${listMaxClass}`}>
+      <ul className={`mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto ${listMaxClass}`}>
         {items.length === 0 ? (
           <li className="grid place-items-center rounded-2xl border border-dashed border-[color:var(--border)] py-4 text-xs text-[color:var(--muted)]">
             Nothing on the list — add a task above.

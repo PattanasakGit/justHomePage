@@ -92,6 +92,10 @@ New tests (delta +15):
 - Unit (`src/components/widgets/pomodoro-ring.test.tsx`): the explicit `size: 'sm' | 'md' | 'lg'` prop renders the wrapper at 88 / 112 / 128 px respectively (replaces the previous `scale: 'compact' | 'full'` enum).
 - Component (`src/components/widgets/widget-quick-links.test.tsx`): with 12 fake links at `wide`, the `[data-testid='quick-links-scroll']` element exists and has `overflow-y-auto` + `min-h-0` + `flex-1` classes (the actual fix verification); `wide` uses `grid-cols-2` and `regular` uses `grid-cols-1`; the body root carries the `flex h-full min-h-0 flex-col` chain.
 - Component (`src/components/widgets/widget-weather.test.tsx`): in `error` state exactly one element with `role="status"` renders and exactly one `data-testid='weather-footer'` exists (footer slot is replaced in place, not appended); same for `blocked`; the ready state has zero `role="status"` nodes and a single footer.
+- Component (`src/components/widgets/widget-frame.test.tsx`): mounts each `(type, size)` pair and asserts the article's class string. Cases:
+  - `clock/regular`, `weather/compact`, `weather/regular`, `pomodoro/wide` MUST contain `row-span-2` (the per-(type, size) exception table in `widget-frame.tsx` must allocate a second row at `lg`).
+  - `clock/compact`, `pomodoro/regular`, `date/compact`, `date/regular`, `weather/wide` MUST NOT contain `row-span-2` (sibling rows stay 1; only the explicit exceptions get a taller row).
+  - `notes/tall`, `todo/tall` keep the implicit `row-span-2` from `sizeSpanClass`.
 
 Manual matrix (must do before declaring polish work done):
 

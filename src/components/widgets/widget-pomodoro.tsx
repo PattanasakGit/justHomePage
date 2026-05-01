@@ -41,7 +41,8 @@ export function WidgetPomodoro({
 
   if (size === "wide") {
     return (
-      <div className="grid h-full min-h-0 grid-cols-[auto_1fr_auto] items-center gap-6">
+      <div className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="grid min-h-0 flex-1 grid-cols-[auto_1fr_auto] items-center gap-6">
         <PomodoroRing
           secondsLeft={state.remainingSeconds}
           total={totalSeconds}
@@ -67,13 +68,15 @@ export function WidgetPomodoro({
             onReset={() => dispatch({ type: "reset" })}
           />
         </div>
+        </div>
       </div>
     );
   }
 
   // regular — horizontal flex: ring left (88px), controls right.
   return (
-    <div className="flex h-full min-h-0 items-center gap-4">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 items-center gap-4">
       <PomodoroRing
         secondsLeft={state.remainingSeconds}
         total={totalSeconds}
@@ -93,6 +96,7 @@ export function WidgetPomodoro({
           onToggle={() => dispatch({ type: state.running ? "pause" : "start" })}
           onReset={() => dispatch({ type: "reset" })}
         />
+      </div>
       </div>
     </div>
   );

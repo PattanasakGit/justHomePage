@@ -51,7 +51,7 @@ export function WidgetBookmark({
 
   if (editing) {
     return (
-      <div className="flex h-full flex-col gap-2">
+      <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden">
         <input
           type="text"
           value={url}
@@ -79,7 +79,7 @@ export function WidgetBookmark({
 
   if (!safeUrl) {
     return (
-      <div className="grid h-full place-items-center rounded-2xl border border-dashed border-[color:var(--border)] p-3 text-center">
+      <div className="grid h-full min-h-0 place-items-center overflow-hidden rounded-2xl border border-dashed border-[color:var(--border)] p-3 text-center">
         {/* Icon plate exception: the bookmark plate stays bg-white per brand-icon rule. */}
         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/90 text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
           <FiBookmark />
@@ -94,7 +94,7 @@ export function WidgetBookmark({
       href={safeUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex h-full flex-col items-center justify-center gap-2 rounded-2xl p-2 transition hover:bg-[color:var(--surface)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+      className="group flex h-full min-h-0 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl p-2 transition hover:bg-[color:var(--surface)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
     >
       <span className="relative">
         {/* Icon plate exception: bg-white plate is the documented brand-icon affordance. */}
