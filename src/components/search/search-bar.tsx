@@ -42,7 +42,7 @@ export function SearchBar() {
       <form
         role="search"
         onSubmit={onSubmit}
-        className="relative z-40 mx-auto flex min-h-[78px] max-w-[820px] items-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--panel)] px-5 shadow-search backdrop-blur-xl"
+        className="relative z-40 mx-auto flex min-h-[64px] max-w-[820px] items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--panel)] px-4 shadow-search backdrop-blur-xl sm:min-h-[78px] sm:gap-3 sm:px-5"
       >
         <FiSearch className="shrink-0 text-2xl text-[color:var(--muted)]" aria-hidden />
         <input
@@ -53,12 +53,15 @@ export function SearchBar() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search the web..."
-          className="h-16 min-w-0 flex-1 bg-transparent text-[17px] font-medium outline-none placeholder:font-normal placeholder:text-[color:var(--muted)] sm:text-xl"
+          className="h-12 min-w-0 flex-1 bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-[color:var(--muted)] sm:h-16 sm:text-xl"
         />
+        {/* TODO: wire FiSliders to a "search settings" sheet (saved searches,
+            keyboard shortcuts). Hidden on <sm because it has no behavior yet
+            and only crowds the pill on iPhone. See ux-lead spec §6 (2026-05-01). */}
         <button
           type="button"
           aria-label="Search settings"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-lg text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          className="hidden h-11 w-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-lg text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:grid"
         >
           <FiSliders />
         </button>
@@ -68,7 +71,7 @@ export function SearchBar() {
             aria-label="Choose search engine"
             aria-expanded={providerMenuOpen}
             onClick={() => setProviderMenuOpen((open) => !open)}
-            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:px-5 sm:text-base"
+            className="inline-flex h-11 min-h-11 shrink-0 items-center gap-1 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:h-12 sm:gap-2 sm:px-5 sm:text-base"
           >
             <ProviderIcon style={{ color: providerBrand.color }} />
             <span className="hidden max-w-[118px] truncate sm:inline">{provider.label}</span>
@@ -76,7 +79,7 @@ export function SearchBar() {
           </button>
 
           {providerMenuOpen ? (
-            <div className="absolute right-0 top-[calc(100%+12px)] z-50 max-h-[420px] w-[min(82vw,360px)] overflow-y-auto rounded-[26px] border border-[color:var(--border)] bg-[color:var(--popup)] p-3 text-left shadow-panel">
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 max-h-[60svh] w-[min(92vw,360px)] overflow-y-auto rounded-[26px] border border-[color:var(--border)] bg-[color:var(--popup)] p-3 text-left shadow-panel sm:top-[calc(100%+12px)]">
               {(["Web", "AI", "Media"] as const).map((group) =>
                 groupedProviders[group]?.length ? (
                   <div key={group} className="py-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import { FiCheck, FiMoreHorizontal, FiTrash2 } from "react-icons/fi";
+import { FiArrowDown, FiArrowUp, FiBookmark, FiCheck, FiCloud, FiMapPin, FiMoreHorizontal, FiTrash2 } from "react-icons/fi";
 import { memo, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { WidgetClock } from "@/components/widgets/widget-clock";
@@ -12,6 +12,8 @@ import { WidgetTodo } from "@/components/widgets/widget-todo";
 import { WidgetWeather } from "@/components/widgets/widget-weather";
 import { WidgetBookmark } from "@/components/widgets/widget-bookmark";
 import { getWidgetMeta } from "@/components/widgets/widget-registry";
+import { useLocalEnvironment } from "@/hooks/use-local-environment";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type {
   BookmarkConfig,
   HomeWidget,
@@ -22,6 +24,7 @@ import type {
   WidgetVariantSpec,
 } from "@/lib/types";
 import { useHomeStore } from "@/stores/home-store";
+import { normalizeUrl } from "@/lib/url";
 
 const widgetScalePadding: Record<UIScale, string> = {
   compact: "p-4",
@@ -48,6 +51,9 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
   const removeWidget = useHomeStore((state) => state.removeWidget);
   const setVariant = useHomeStore((state) => state.setVariant);
   const updateWidgetConfig = useHomeStore((state) => state.updateWidgetConfig);
+  const moveWidgetUp = useHomeStore((state) => state.moveWidgetUp);
+  const moveWidgetDown = useHomeStore((state) => state.moveWidgetDown);
+  const isMobile = useMediaQuery("(max-width: 639.98px)");
   const meta = getWidgetMeta(widget.type);
   const Icon = meta.icon;
   const density = deriveDensity(widget.layout.w, widget.layout.h);
@@ -77,7 +83,7 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
   return (
     <article
       ref={articleRef}
-      className={`widget-frame relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] ${widgetScalePadding[scale]} shadow-tile ui-glass`}
+      className={`widget-frame relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] ${widgetScalePadding[scale]} shadow-sm ui-glass sm:shadow-tile`}
       tabIndex={editMode ? 0 : -1}
     >
       <header
@@ -90,7 +96,35 @@ export const WidgetFrame = memo(function WidgetFrame({ widget, scale }: { widget
           <span className="truncate">{widget.title}</span>
         </div>
         {editMode ? (
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="widget-no-drag flex shrink-0 items-center gap-1">
+            {isMobile ? (
+              <>
+                <button
+                  type="button"
+                  aria-label={`Move ${widget.title} up`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    moveWidgetUp(widget.id);
+                  }}
+                  className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+                >
+                  <FiArrowUp />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move ${widget.title} down`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    moveWidgetDown(widget.id);
+                  }}
+                  className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--muted)] transition hover:bg-[color:var(--surface-strong)] hover:text-[color:var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+                >
+                  <FiArrowDown />
+                </button>
+              </>
+            ) : null}
             <OverflowMenu
               widget={widget}
               variants={meta.variants}
@@ -298,6 +332,12 @@ function WidgetBody({
   editMode: boolean;
   onConfigChange: (patch: Record<string, unknown>) => void;
 }) {
+  // Mobile (`<sm`) substitutes a smallest-size body for a few widget types so
+  // the auto-stacked phone column reads like Apple's Lock Screen widgets
+  // instead of a shrunken desktop card. Desktop branches stay intact so the
+  // existing tests (regular/wide/tall/hero compositions) remain green.
+  const isMobile = useMediaQuery("(max-width: 639.98px)");
+
   switch (widget.type) {
     case "clock":
       return <WidgetClock scale={scale} size={density} />;
@@ -305,11 +345,13 @@ function WidgetBody({
       return <WidgetDate size={density} />;
     case "notes":
       return (
-        <WidgetNotes
-          size={density}
-          body={typeof widget.config.body === "string" ? widget.config.body : ""}
-          onChange={(body) => onConfigChange({ body })}
-        />
+        <div data-mobile-cap={isMobile ? "true" : "false"} className={isMobile ? "h-full max-h-[40svh] min-h-0" : "h-full min-h-0"}>
+          <WidgetNotes
+            size={density}
+            body={typeof widget.config.body === "string" ? widget.config.body : ""}
+            onChange={(body) => onConfigChange({ body })}
+          />
+        </div>
       );
     case "quickLinks":
       return (
@@ -321,18 +363,24 @@ function WidgetBody({
     case "pomodoro":
       return (
         <WidgetPomodoro
-          variant={widget.variant}
+          variant={isMobile ? "pomo-compact" : widget.variant}
           size={density}
           config={widget.config as Partial<PomodoroConfig>}
         />
       );
     case "todo": {
       const items = Array.isArray(widget.config.items) ? (widget.config.items as TodoItem[]) : [];
-      return <WidgetTodo size={density} items={items} onChange={(next) => onConfigChange({ items: next })} />;
+      return (
+        <div data-mobile-cap={isMobile ? "true" : "false"} className={isMobile ? "h-full max-h-[40svh] min-h-0" : "h-full min-h-0"}>
+          <WidgetTodo size={density} items={items} onChange={(next) => onConfigChange({ items: next })} />
+        </div>
+      );
     }
     case "weather":
+      if (isMobile) return <MobileWeatherBody />;
       return <WidgetWeather size={density} />;
     case "bookmark":
+      if (isMobile && !editMode) return <MobileBookmarkRow config={widget.config as Partial<BookmarkConfig>} />;
       return (
         <WidgetBookmark
           size={density}
@@ -344,4 +392,79 @@ function WidgetBody({
     default:
       return null;
   }
+}
+
+/**
+ * Mobile-only single-line weather body. Uses the same env data as the
+ * desktop branch but drops the gradient + grid layout so a 4-col stack at
+ * 390px still reads at a glance.
+ */
+function MobileWeatherBody() {
+  const env = useLocalEnvironment();
+  const tempLabel = env.temperatureC === null ? "--" : `${env.temperatureC}°`;
+  return (
+    <div
+      data-mobile-weather="true"
+      className="flex h-full min-h-0 items-center gap-2 text-[color:var(--ink)]"
+    >
+      <FiCloud className="text-[color:var(--accent)]" />
+      <span className="text-2xl font-semibold tabular-nums leading-none">{tempLabel}</span>
+      <span className="text-sm text-[color:var(--muted)]">·</span>
+      <span className="inline-flex min-w-0 items-center gap-1 truncate text-sm text-[color:var(--muted)]">
+        <FiMapPin className="shrink-0" />
+        <span className="truncate">{env.locationLabel}</span>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Mobile-only bookmark launch-row: icon plate left, caption + host inline
+ * right. Replaces the icon/thumbnail-on-top layout used on desktop tiles.
+ */
+function MobileBookmarkRow({ config }: { config: Partial<BookmarkConfig> }) {
+  const url = config.url ?? "";
+  const caption = config.caption ?? "";
+  const thumbnail = config.thumbnail ?? null;
+  const safeUrl = normalizeUrl(url);
+  const host = safeUrl ? safeUrl.replace(/^https?:\/\//, "").split("/")[0] : "";
+
+  if (!safeUrl) {
+    return (
+      <div
+        data-mobile-bookmark="true"
+        className="grid h-full min-h-0 place-items-center rounded-2xl border border-dashed border-[color:var(--border)] p-3 text-center"
+      >
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/90 text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+          <FiBookmark />
+        </span>
+        <span className="mt-2 text-xs text-[color:var(--muted)]">Add a bookmark — paste a URL in edit mode.</span>
+      </div>
+    );
+  }
+
+  return (
+    <a
+      href={safeUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-mobile-bookmark="true"
+      className="flex h-full min-h-0 items-center gap-3 rounded-2xl p-2 transition hover:bg-[color:var(--surface)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+    >
+      {/* Brand icon plate exception: bg-white/95 stays per the documented
+          brand-icon affordance rule. */}
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white/95 ring-1 ring-[color:var(--border)]">
+        {thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={thumbnail} alt="" className="h-7 w-7 rounded-md object-contain" />
+        ) : (
+          <FiBookmark className="text-[color:var(--muted)]" />
+        )}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-sm font-semibold text-[color:var(--ink)]">{caption || host}</span>
+        {host ? <span className="truncate text-[11px] text-[color:var(--muted)]">{host}</span> : null}
+      </span>
+    </a>
+  );
 }

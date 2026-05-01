@@ -31,9 +31,12 @@ type IconPickerProps = {
   value: string;
   title: string;
   onChange: (next: string) => void;
+  /** When true, switches to a 6-col grid and a viewport-relative scroll cap
+   *  (`max-h-[40svh]`) sized for the mobile full-screen favorite editor. */
+  mobileScrollCap?: boolean;
 };
 
-export function IconPicker({ value, title, onChange }: IconPickerProps) {
+export function IconPicker({ value, title, onChange, mobileScrollCap = false }: IconPickerProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<IconCategory | "all">("all");
   const [page, setPage] = useState(0);
@@ -100,10 +103,14 @@ export function IconPicker({ value, title, onChange }: IconPickerProps) {
         })}
       </div>
 
-      <div className="mt-3 max-h-[260px] overflow-y-auto">
+      <div
+        className={`mt-3 overflow-y-auto ${
+          mobileScrollCap ? "max-h-[40svh]" : "max-h-[260px]"
+        }`}
+      >
         {showLetter ? (
           <>
-            <div className="mb-2 grid grid-cols-7 gap-2">
+            <div className="mb-2 grid grid-cols-6 gap-2 sm:grid-cols-7">
               <IconButton
                 key={LETTER_ICON}
                 id={LETTER_ICON}
@@ -122,7 +129,7 @@ export function IconPicker({ value, title, onChange }: IconPickerProps) {
             No icons match your search.
           </div>
         ) : (
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-6 gap-2 sm:grid-cols-7">
             {pageItems.map((entry) => (
               <IconButton
                 key={entry.id}
