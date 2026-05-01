@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createHomeStore } from "./home-store";
+import { createHomeStore, migrateHomeState } from "./home-store";
+import { getWidgetMeta } from "@/components/widgets/widget-registry";
+import type { HomeWidget } from "@/lib/types";
 
 describe("home store", () => {
   it("adds and removes favorites", () => {
@@ -42,13 +44,25 @@ describe("home store", () => {
     expect(store.getState().widgets[2].id).toBe(widgets[0].id);
   });
 
-  it("resizes an individual widget", () => {
+  it("resizes an individual widget within its allowed sizes", () => {
     const store = createHomeStore();
-    const widget = store.getState().widgets[0];
+    const clock = store.getState().widgets.find((widget) => widget.type === "clock");
+    expect(clock).toBeDefined();
 
-    store.getState().resizeWidget(widget.id, "max");
+    store.getState().resizeWidget(clock!.id, "regular");
 
-    expect(store.getState().widgets[0].size).toBe("max");
+    expect(store.getState().widgets.find((widget) => widget.id === clock!.id)?.size).toBe("regular");
+  });
+
+  it("ignores resize requests outside the widget's allowed sizes", () => {
+    const store = createHomeStore();
+    const clock = store.getState().widgets.find((widget) => widget.type === "clock");
+    expect(clock).toBeDefined();
+    const before = clock!.size;
+
+    store.getState().resizeWidget(clock!.id, "hero");
+
+    expect(store.getState().widgets.find((widget) => widget.id === clock!.id)?.size).toBe(before);
   });
 
   it("updates search and theme preferences", () => {
@@ -81,6 +95,42 @@ describe("home store", () => {
     store.getState().setFont("rounded");
 
     expect(store.getState().preferences.font).toBe("rounded");
+  });
+
+  it("migrates persisted widget sizes from legacy v5 to v6", () => {
+    const persisted = {
+      widgets: [
+        { id: "w-clock", type: "clock", title: "Clock", size: "small", config: {} },
+        { id: "w-notes", type: "notes", title: "Note", size: "max", config: { body: "" } },
+        { id: "w-todo", type: "todo", title: "Today", size: "middle", config: { items: [] } },
+        { id: "w-pomo", type: "pomodoro", title: "Focus", size: "max", config: { focusMinutes: 25, breakMinutes: 5 } },
+        { id: "w-bookmark", type: "bookmark", title: "Pinned", size: "max", config: { url: "", caption: "", thumbnail: null } },
+      ],
+    };
+
+    const next = migrateHomeState(persisted, 5) as { widgets: HomeWidget[] };
+
+    const byId = (id: string) => next.widgets.find((widget) => widget.id === id)!;
+    // small -> compact, middle -> regular, max -> wide; clamped per allowedSizes
+    expect(byId("w-clock").size).toBe("compact");
+    // notes does not allow "wide" (max -> wide -> not allowed) -> falls back to default (tall)
+    expect(byId("w-notes").size).toBe(getWidgetMeta("notes").defaultSize);
+    // todo allows regular -> middle stays regular
+    expect(byId("w-todo").size).toBe("regular");
+    // pomodoro allows wide -> max migrates to wide
+    expect(byId("w-pomo").size).toBe("wide");
+    // bookmark does not allow wide -> falls back to default (compact)
+    expect(byId("w-bookmark").size).toBe(getWidgetMeta("bookmark").defaultSize);
+  });
+
+  it("falls back to defaultSize when migrated value is unknown", () => {
+    const persisted = {
+      widgets: [
+        { id: "w-clock", type: "clock", title: "Clock", size: "alien", config: {} },
+      ],
+    };
+    const next = migrateHomeState(persisted, 5) as { widgets: HomeWidget[] };
+    expect(next.widgets[0].size).toBe(getWidgetMeta("clock").defaultSize);
   });
 
   it("updates visual tuning preferences", () => {

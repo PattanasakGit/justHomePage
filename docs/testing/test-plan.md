@@ -70,7 +70,14 @@
 
 ## Widgets Expansion
 
-- Unit (`src/components/widgets/widget-registry.test.ts`): every `WidgetType` has metadata; registry keys match the union; `defaultTitle` is non-empty.
+- Unit (`src/components/widgets/widget-registry.test.ts`): every `WidgetType` has metadata; registry keys match the union; `defaultTitle` is non-empty; every widget exposes a duplicate-free `allowedSizes` from the known vocabulary; `defaultSize` is always a member of `allowedSizes`; multi-size widgets (`notes`, `pomodoro`, `todo`, `quickLinks`) expose at least 2 sizes.
 - Unit (`src/components/widgets/pomodoro-engine.test.ts`): initial state, start/pause, tick decrement, paused tick no-op, auto switch at zero, reset preserves mode, switchMode resets seconds, time formatter padding.
 - Unit (`src/components/widgets/todo-engine.test.ts`): trim-on-add, ignore empty, toggle by id, remove by id, clear-done filter.
 - Manual: add each new widget from edit mode → configure (set bookmark URL, set first todo, start pomodoro) → reload → state persists. Confirm Workspace DnD still reorders and sizes still respected.
+
+## Widget Polish (sizes + Quiet OS)
+
+- Unit (`src/components/widgets/size-cycle.test.ts`): `nextSize` advances + wraps; single-allowed list returns same; out-of-list current falls back to first allowed. `previousSize` mirrors the behaviour for `shift+r`.
+- Unit (`src/components/widgets/pomodoro-ring.test.tsx`): `computeRingDashOffset` is 0 at full remaining, full circumference at 0, half at 50%; rendered SVG has the full circumference dasharray + zero offset for `focus`/`full-remaining`, `4 6` dasharray for `break` mode.
+- Unit (`src/stores/home-store.test.ts`): persist v5 → v6 migration maps `small → compact`, `middle → regular`, `max → wide`; values not in a widget's `allowedSizes` (e.g. notes + `wide`) fall back to that widget's `defaultSize`; unknown legacy strings also fall back. `resizeWidget` rejects out-of-allowed sizes (no-op).
+- Manual: enter edit mode → for each widget cycle through every allowed size; confirm the cycle button's icon swaps to match the current size; confirm overflow popover (`⋯`) shows `Remove` and dismisses on Escape / outside-click; confirm the cycle button is hidden when only one size is allowed (no widgets currently expose this case but the rule is enforced in `widget-frame.tsx`).

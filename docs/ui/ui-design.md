@@ -52,7 +52,43 @@ Minimal personal productivity dashboard: soft material surfaces, restrained acce
 
 ## Widgets
 
-- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, size buttons, remove) and dispatches body rendering by type.
-- All widgets use theme tokens (`--accent`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` (the brand-icon plate exception still applies).
+- Each widget is a small focused component under `src/components/widgets/`. The frame (`widget-frame.tsx`) is responsible only for chrome (header, cycle resize, overflow popover) and dispatches body rendering by type.
+- All widgets use theme tokens (`--accent`, `--accent-soft`, `--surface`, `--surface-strong`, `--ink`, `--ink-inverse`, `--muted`). No raw `bg-white` or `text-white` outside two documented exceptions: the favorite tile brand-icon plate and the bookmark widget plate.
 - Pomodoro uses `tabular-nums` for the timer display so digit width stays steady.
-- Bookmark thumbnail uses a `--surface-strong` plate; falls back to a `FiBookmark` glyph when no metadata is fetched yet.
+- Bookmark thumbnail uses a light brand-icon plate (the documented exception); falls back to a `FiBookmark` glyph when no metadata is fetched yet.
+
+### Size vocabulary (per-widget)
+
+Five size ids share a Tailwind class map:
+
+| id | sm span | lg span | row-span | typical use |
+|----|---------|---------|----------|-------------|
+| `compact` | 1 | 1 | 1 | single metric |
+| `regular` | 2 | 2 | 1 | label + body |
+| `wide` | 2 | 4 | 1 | timeline / horizontal list |
+| `tall` | 1 | 2 | 2 | editor / scroll list |
+| `hero` | 2 | 4 | 2 | rich panel |
+
+Each widget exposes a curated `allowedSizes: WidgetSize[]` and a `defaultSize` (defined in `src/components/widgets/widget-registry.ts`). `defaultSize` is always a member of `allowedSizes`. The `home-store` `resizeWidget` action rejects (no-op + dev `console.warn`) sizes outside the widget's allowed list.
+
+### Cycle resize control + overflow popover
+
+In edit mode, each widget header shows two trailing controls:
+
+1. A single **cycle button** that advances through `allowedSizes` (icon mapping: `compact → FiSquare`, `regular → FiColumns`, `wide → FiMinus`, `tall → FiBookOpen`, `hero → FiMaximize2`). When `allowedSizes.length === 1` the button is **not rendered** (no dead affordance). The button label includes the current size; `r` keypress while the article holds focus cycles forward.
+2. An **overflow trigger** (`⋯` / `FiMoreHorizontal`) that opens a small popover (`--popup` background) with theme-token menu items. Today only `Remove` is rendered; widget-specific `Settings…` items will appear here in the future and are simply omitted when no settings exist.
+
+Both trailing buttons stop pointer propagation so they do not initiate `@dnd-kit` drag.
+
+### Quiet OS hero language
+
+The widget set follows the "Quiet OS" direction (calm, type-led, one accent touch per tile):
+
+- **clock** — large `tabular-nums` HH:MM with a thin accent seconds bar.
+- **date** — oversized accent day-number with subdued weekday + month.
+- **notes** — minimal textarea framed by a single accent focus bar at the top (`--accent-soft` idle, `--accent` while focused).
+- **quickLinks** — leading accent dot (HSL-rotated from `--accent`) before each link label.
+- **pomodoro** — 140-px SVG ring (96-px at `regular`); `stroke-dashoffset` animation; solid stroke for focus, dashed for break.
+- **todo** — strip with a thin accent left edge (`--accent-soft` idle, `--accent` checked).
+- **weather** — accent-tinted temperature glyph; label `LOCAL WEATHER` uppercase; soft top-down `--accent-soft → transparent` gradient.
+- **bookmark** — light icon plate ring with caption underneath; in edit mode the inline form replaces the launch tile.

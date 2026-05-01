@@ -6,7 +6,7 @@ import { createStore } from "zustand/vanilla";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { defaultFavorites, defaultPreferences, defaultWidgets } from "@/data/defaults";
-import { getWidgetMeta } from "@/components/widgets/widget-registry";
+import { getWidgetMeta, resolveWidgetSize } from "@/components/widgets/widget-registry";
 import type {
   BackgroundId,
   Favorite,
@@ -91,7 +91,18 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
     })),
   resizeWidget: (id, size) =>
     set((state) => ({
-      widgets: state.widgets.map((widget) => (widget.id === id ? { ...widget, size } : widget)),
+      widgets: state.widgets.map((widget) => {
+        if (widget.id !== id) return widget;
+        const meta = getWidgetMeta(widget.type);
+        if (!meta.allowedSizes.includes(size)) {
+          if (process.env.NODE_ENV !== "production") {
+            // eslint-disable-next-line no-console
+            console.warn(`[home-store] resizeWidget rejected: ${widget.type} does not allow size "${size}"`);
+          }
+          return widget;
+        }
+        return { ...widget, size };
+      }),
     })),
   updateWidgetConfig: (id, config) =>
     set((state) => ({
@@ -157,41 +168,68 @@ export function createHomeStore() {
   return createStore<HomeState>()(createHomeState);
 }
 
+/**
+ * Pure migration used by the persist middleware. Exported so tests can pin
+ * legacy → current behaviour without setting up the persist middleware.
+ *
+ * - <= v5: legacy size vocabulary (small/middle/max) is mapped to the v6
+ *   vocabulary (compact/regular/wide/tall/hero) and clamped against each
+ *   widget's `allowedSizes`. Unknown values fall back to the type's
+ *   `defaultSize`.
+ * - Preferences gain new defaults if they are missing.
+ */
+export function migrateHomeState(persisted: unknown, _version: number): HomeState {
+  const state = persisted as Partial<HomeState> & {
+    preferences?: Partial<Preferences> & {
+      background?: BackgroundId;
+      backgroundImage?: string | null;
+      wallpaperLuminance?: number | null;
+    };
+    widgets?: Array<{ id: string; type: WidgetType; title: string; size: unknown; config: Record<string, unknown> }>;
+  };
+
+  const widgets: HomeWidget[] = Array.isArray(state.widgets)
+    ? state.widgets.map((widget) => ({
+        id: widget.id,
+        type: widget.type,
+        title: widget.title,
+        size: resolveWidgetSize(widget.type, widget.size),
+        config: widget.config ?? {},
+      }))
+    : defaultWidgets;
+
+  const preferences: Preferences = state.preferences
+    ? {
+        ...defaultPreferences,
+        ...state.preferences,
+        theme: state.preferences.theme ?? state.preferences.background ?? defaultPreferences.theme,
+        wallpaperImage:
+          state.preferences.wallpaperImage ?? state.preferences.backgroundImage ?? defaultPreferences.wallpaperImage,
+        wallpaperLuminance: state.preferences.wallpaperLuminance ?? defaultPreferences.wallpaperLuminance,
+        font: state.preferences.font ?? defaultPreferences.font,
+        accentColor: state.preferences.accentColor ?? defaultPreferences.accentColor,
+        uiOpacity: state.preferences.uiOpacity ?? defaultPreferences.uiOpacity,
+        blur: state.preferences.blur ?? defaultPreferences.blur,
+        contrast: state.preferences.contrast ?? defaultPreferences.contrast,
+        favoriteScale: state.preferences.favoriteScale ?? defaultPreferences.favoriteScale,
+        widgetScale: state.preferences.widgetScale ?? defaultPreferences.widgetScale,
+        zoneOrder: state.preferences.zoneOrder ?? [...defaultPreferences.zoneOrder],
+        zoneVisibility: state.preferences.zoneVisibility ?? { ...defaultPreferences.zoneVisibility },
+      }
+    : defaultPreferences;
+
+  return {
+    ...(state as HomeState),
+    widgets,
+    preferences,
+  } as HomeState;
+}
+
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 5,
-    migrate: (persisted) => {
-      const state = persisted as Partial<HomeState> & {
-        preferences?: Partial<Preferences> & {
-          background?: BackgroundId;
-          backgroundImage?: string | null;
-          wallpaperLuminance?: number | null;
-        };
-      };
-      if (!state.preferences) return persisted as HomeState;
-
-      return {
-        ...state,
-        preferences: {
-          ...defaultPreferences,
-          ...state.preferences,
-          theme: state.preferences.theme ?? state.preferences.background ?? defaultPreferences.theme,
-          wallpaperImage:
-            state.preferences.wallpaperImage ?? state.preferences.backgroundImage ?? defaultPreferences.wallpaperImage,
-          wallpaperLuminance: state.preferences.wallpaperLuminance ?? defaultPreferences.wallpaperLuminance,
-          font: state.preferences.font ?? defaultPreferences.font,
-          accentColor: state.preferences.accentColor ?? defaultPreferences.accentColor,
-          uiOpacity: state.preferences.uiOpacity ?? defaultPreferences.uiOpacity,
-          blur: state.preferences.blur ?? defaultPreferences.blur,
-          contrast: state.preferences.contrast ?? defaultPreferences.contrast,
-          favoriteScale: state.preferences.favoriteScale ?? defaultPreferences.favoriteScale,
-          widgetScale: state.preferences.widgetScale ?? defaultPreferences.widgetScale,
-          zoneOrder: state.preferences.zoneOrder ?? [...defaultPreferences.zoneOrder],
-          zoneVisibility: state.preferences.zoneVisibility ?? { ...defaultPreferences.zoneVisibility },
-        },
-      } as HomeState;
-    },
+    version: 6,
+    migrate: (persisted, version) => migrateHomeState(persisted, version),
     partialize: (state) => ({
       favorites: state.favorites,
       widgets: state.widgets,

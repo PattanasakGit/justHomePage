@@ -14,7 +14,8 @@
 - Zustand stores must stay focused by interaction domain as the app grows.
 - Never hardcode `bg-white/*`, `text-white`, or hex text colors in components — use `--surface`, `--surface-strong`, `--panel`, `--tile`, `--ink`, `--ink-inverse`, `--muted` tokens so dark/light contrast stays readable. Brand icon plates are the documented exception (always light).
 - DnD ids are namespaced by domain: `zone-…`, `fav…`, `widget…`. The single `DndContext` in `home-page.tsx` routes drag events by prefix; never reuse a prefix for a different domain.
-- Persisted store schema lives at version 5; bumping it requires a migration that backfills new fields with defaults so older snapshots still load.
+- Persisted store schema lives at version 6; bumping it requires a migration that backfills new fields with defaults so older snapshots still load.
+- Widget sizes are per-type via `allowedSizes`; never assume the global `WidgetSize` enum exhaustively applies to every widget. Always clamp through the registry (e.g. via `resolveWidgetSize`) before persisting or applying a size.
 
 ## Working Style
 
@@ -24,5 +25,5 @@
 - Document Vercel deployment caveats when touching persistence.
 - The icon catalog is the single source of truth for picker entries (`src/components/icons/icon-catalog.ts`). When adding a brand icon, also add a matching `iconMap` entry in `brand-icon.tsx`. When adding a neutral icon, register the renderer in `neutralEntries`.
 - Neutral icons must render in `var(--ink)`, never a brand color.
-- The widget registry (`src/components/widgets/widget-registry.ts`) is the single source of truth for widget metadata. Adding a new widget requires: (1) extend `WidgetType`, (2) add a config interface to `WidgetConfigByType`, (3) add a registry entry with `defaultConfig`, (4) add a body component file under `src/components/widgets/`, (5) extend the dispatch in `widget-frame.tsx`.
+- The widget registry (`src/components/widgets/widget-registry.ts`) is the single source of truth for widget metadata. Adding a new widget requires: (1) extend `WidgetType`, (2) add a config interface to `WidgetConfigByType`, (3) add a registry entry with `defaultConfig`, `defaultSize`, and `allowedSizes`, (4) add a body component file under `src/components/widgets/`, (5) extend the dispatch in `widget-frame.tsx`.
 - Pomodoro and todo logic live in `pomodoro-engine.ts` / `todo-engine.ts` so they can be unit tested without React.

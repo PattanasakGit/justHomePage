@@ -3,17 +3,20 @@
 import { FormEvent, useState } from "react";
 import { FiCheck, FiPlus, FiX } from "react-icons/fi";
 import { addTodo, clearDone, removeTodo, toggleTodo } from "@/components/widgets/todo-engine";
-import type { TodoItem } from "@/lib/types";
+import type { TodoItem, WidgetSize } from "@/lib/types";
 
 export function WidgetTodo({
   items,
+  size = "regular",
   onChange,
 }: {
   items: TodoItem[];
+  size?: WidgetSize;
   onChange: (next: TodoItem[]) => void;
 }) {
   const [draft, setDraft] = useState("");
   const remaining = items.filter((item) => !item.done).length;
+  const listMaxClass = size === "tall" || size === "hero" ? "max-h-none" : "max-h-[140px]";
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,17 +44,23 @@ export function WidgetTodo({
           <FiPlus />
         </button>
       </form>
-      <ul className="mt-3 flex-1 space-y-1.5 overflow-y-auto">
+      <ul className={`mt-3 flex-1 space-y-1 overflow-y-auto ${listMaxClass}`}>
         {items.length === 0 ? (
           <li className="grid place-items-center rounded-2xl border border-dashed border-[color:var(--border)] py-4 text-xs text-[color:var(--muted)]">
-            Nothing on the list yet.
+            Nothing on the list — add a task above.
           </li>
         ) : (
           items.map((item) => (
             <li
               key={item.id}
-              className="group flex items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-2 py-1.5"
+              className="group relative flex items-center gap-2 rounded-xl pl-3 pr-2 py-1.5 transition hover:bg-[color:var(--surface)]"
             >
+              <span
+                aria-hidden
+                className={`absolute inset-y-1 left-0 w-[2px] rounded-full transition ${
+                  item.done ? "bg-[color:var(--accent)]" : "bg-[color:var(--accent-soft)]"
+                }`}
+              />
               <button
                 type="button"
                 aria-label={item.done ? `Mark "${item.text}" not done` : `Mark "${item.text}" done`}
@@ -90,7 +99,7 @@ export function WidgetTodo({
               onClick={() => onChange(clearDone(items))}
               className="rounded-full px-2 py-0.5 font-semibold transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
             >
-              Clear done
+              clear done
             </button>
           ) : null}
         </div>

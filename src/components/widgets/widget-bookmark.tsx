@@ -2,16 +2,18 @@
 
 import { ChangeEvent, useEffect, useRef } from "react";
 import { FiBookmark, FiExternalLink } from "react-icons/fi";
-import type { BookmarkConfig } from "@/lib/types";
+import type { BookmarkConfig, WidgetSize } from "@/lib/types";
 import { normalizeUrl } from "@/lib/url";
 
 export function WidgetBookmark({
   config,
   editing,
+  size = "compact",
   onChange,
 }: {
   config: Partial<BookmarkConfig>;
   editing: boolean;
+  size?: WidgetSize;
   onChange: (next: Partial<BookmarkConfig>) => void;
 }) {
   const url = config.url ?? "";
@@ -72,34 +74,45 @@ export function WidgetBookmark({
   }
 
   const safeUrl = normalizeUrl(url);
+  const host = safeUrl ? safeUrl.replace(/^https?:\/\//, "").split("/")[0] : "";
+  const isRegular = size === "regular";
+
+  if (!safeUrl) {
+    return (
+      <div className="grid h-full place-items-center rounded-2xl border border-dashed border-[color:var(--border)] p-3 text-center">
+        {/* Icon plate exception: the bookmark plate stays bg-white per brand-icon rule. */}
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/90 text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+          <FiBookmark />
+        </span>
+        <span className="mt-2 text-xs text-[color:var(--muted)]">Add a bookmark — paste a URL in edit mode.</span>
+      </div>
+    );
+  }
 
   return (
     <a
-      href={safeUrl || "#"}
-      target={safeUrl ? "_blank" : undefined}
-      rel={safeUrl ? "noopener noreferrer" : undefined}
-      className={`flex h-full flex-col rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-2 transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
-        safeUrl ? "" : "pointer-events-none opacity-60"
-      }`}
+      href={safeUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex h-full flex-col items-center justify-center gap-2 rounded-2xl p-2 transition hover:bg-[color:var(--surface)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
     >
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[color:var(--surface-strong)] text-[color:var(--muted)]">
+      <span className="relative">
+        {/* Icon plate exception: bg-white plate is the documented brand-icon affordance. */}
+        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/95 ring-1 ring-[color:var(--border)] transition group-hover:scale-[1.03] group-hover:ring-[color:var(--accent)] group-focus:ring-[color:var(--accent)]">
           {thumbnail ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumbnail} alt="" className="h-6 w-6 rounded-md object-contain" />
+            <img src={thumbnail} alt="" className="h-7 w-7 rounded-md object-contain" />
           ) : (
-            <FiBookmark />
+            <FiBookmark className="text-[color:var(--muted)]" />
           )}
         </span>
-        <FiExternalLink className="ml-auto text-[color:var(--muted)]" />
-      </div>
-      <div className="mt-auto">
-        <div className="truncate text-sm font-semibold">
-          {caption || safeUrl || "Add a bookmark"}
+        <FiExternalLink className="absolute -right-2 -top-2 hidden text-[color:var(--muted)] group-hover:block group-focus:block" />
+      </span>
+      <div className="text-center">
+        <div className={`truncate ${isRegular ? "text-base" : "text-sm"} font-semibold text-[color:var(--ink)]`}>
+          {caption || host}
         </div>
-        {safeUrl ? (
-          <div className="truncate text-[11px] text-[color:var(--muted)]">{safeUrl.replace(/^https?:\/\//, "")}</div>
-        ) : null}
+        {host ? <div className="truncate text-[11px] text-[color:var(--muted)]">{host}</div> : null}
       </div>
     </a>
   );
