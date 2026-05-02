@@ -5,7 +5,7 @@
 - Header: app name, edit mode, settings.
 - Search: large input with compact provider selector.
 - Favorites: compact draggable icon tiles.
-- Favorites management: add/edit modal with name, URL, and logo picker.
+- Favorites management: add/edit modal with name, URL, and logo picker; folders open as modal grids with breadcrumbs.
 - Workspace: draggable widgets below favorites.
 - Settings: side drawer on desktop, full-screen feeling on mobile.
 
@@ -18,6 +18,7 @@
 - Background settings include theme thumbnails plus an image upload target.
 - Normal mode keeps chrome minimal.
 - Mobile layout stacks widgets and keeps tap targets at least 44px.
+- Folder overlays close with Escape or the close button; breadcrumbs jump back to any ancestor.
 
 ## Mobile (<sm)
 
@@ -26,6 +27,7 @@
 - Favorites grid is `grid-cols-4` (iOS dock pattern).
 - Settings panel is a bottom sheet (`rounded-t-[28px]`, `max-h-[88svh]`) with a 36×4 muted drag indicator at the top center and a `pb-[env(safe-area-inset-bottom)]` floor for the home indicator. Backdrop click and Esc still dismiss.
 - Favorite editor is full-screen (`h-[100svh]`) with a sticky header (title + close) and a sticky footer (Save) that respects `safe-area-inset-bottom`. The icon picker switches to `grid-cols-6` and a `max-h-[40svh]` scroll cap so the form remains reachable when the iOS keyboard is up.
+- Favorite folder modal is also full-screen at `<sm`. The folder title and breadcrumb stay in the sticky header; folder contents scroll below it as a 4-column grid. Empty folders show a centered empty state plus Add website/Add folder actions.
 - Edit-mode workspace chrome: drag/resize stay disabled (RGL `sm`), the inline 8-chip tray collapses behind a single "Add widget" trigger that opens a bottom sheet listing the same eight options. The header no longer carries inline `↑` / `↓` buttons — instead the **overflow popover** holds `Move up` / `Move down` (above `Remove`, each 44 px tall) so the strip's title row never gets eaten by chrome. The muted "Open on a larger screen to rearrange widgets." hint sits **above** the canvas, not below. A footnote below the canvas reads "Workspace layout (drag/resize) is set on a larger screen."
 - **Workspace strips:** every widget is full-width auto-stacked. Per-(type, variant) mobile heights compress to **1 / 2 / 4** cells via `mobileH(type, variant)` in `home-page.tsx`:
   - 1 cell (≈60 px landscape strip): `clock-*`, `date-*`, `weather-*`, `bookmark-*`
@@ -58,6 +60,15 @@
 - Brand icons render in their brand color; neutral icons render in `--ink` so they stay legible on every theme.
 - Empty state: "No icons match your search" when the query and category produce zero results.
 - The picker grid is capped at `max-h-[260px]` with internal scroll so the modal Save button stays visible on small viewports.
+
+## Favorites — Folder Navigation
+
+- Folder tiles use the same tile size vocabulary as website favorites but show a token-based folder plate instead of a brand plate.
+- Clicking a folder opens a modal titled with that folder name. The modal grid reuses favorite tile density (`favoriteScale`) and supports folders inside folders.
+- Breadcrumbs read `Favorites / Parent / Child`; each segment is a button. Long segment labels truncate and the breadcrumb row scrolls horizontally.
+- Add website and Add folder actions are scoped to the currently open folder.
+- In edit mode, website and folder tiles expose edit/remove actions. Removing a folder removes its nested children.
+- Drag-and-drop follows desktop file-manager semantics with an intent delay: hover over a folder for roughly half a second to arm "move into folder". The folder plate gets a highlighted border/ring when armed. Dropping before the highlight appears is treated as a same-level reorder. Inside a folder modal, breadcrumb chips are drop targets for moving the active tile out to root or an ancestor.
 
 ## Widgets — Expanded Set
 

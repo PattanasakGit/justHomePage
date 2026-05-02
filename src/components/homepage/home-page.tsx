@@ -1,6 +1,6 @@
 "use client";
 
-import { DndContext, PointerSensor, closestCenter, type DragEndEvent, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, PointerSensor, closestCenter, type DragEndEvent, type DragOverEvent, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -9,6 +9,7 @@ import "react-grid-layout/css/styles.css";
 import {
   FiAlignJustify,
   FiEdit3,
+  FiFolder,
   FiGrid,
   FiMapPin,
   FiPlus,
@@ -20,11 +21,13 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { SearchBar } from "@/components/search/search-bar";
 import { FavoriteTile } from "@/components/homepage/favorite-tile";
 import { FavoriteEditor } from "@/components/homepage/favorite-editor";
+import { FavoriteFolderEditor } from "@/components/homepage/favorite-folder-editor";
+import { FavoriteFolderModal } from "@/components/homepage/favorite-folder-modal";
 import { SortableZone } from "@/components/homepage/sortable-zone";
 import { WidgetFrame } from "@/components/widgets/widget-frame";
 import { SettingsPanel } from "@/components/settings/settings-panel";
 import { useHomeStore } from "@/stores/home-store";
-import type { Favorite, FavoriteInput, HomeWidget, WidgetType, ZoneId } from "@/lib/types";
+import type { Favorite, FavoriteFolder, FavoriteFolderInput, FavoriteInput, FavoriteItem, HomeWidget, WidgetType, ZoneId } from "@/lib/types";
 import { useLocalEnvironment } from "@/hooks/use-local-environment";
 import { buildThemeVariables, getReadableTextPair, resolveContrast } from "@/lib/theme";
 import { widgetRegistry, getWidgetMeta } from "@/components/widgets/widget-registry";
@@ -48,6 +51,19 @@ const MARGIN: Record<"lg" | "md" | "sm", readonly [number, number]> = {
   md: [10, 10],
   sm: [8, 8],
 };
+const FOLDER_DROP_ARM_MS = 520;
+
+function findFavoriteItem(items: FavoriteItem[], id: string | null): FavoriteItem | null {
+  if (!id) return null;
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.type === "folder") {
+      const found = findFavoriteItem(item.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 function widgetToLayoutItem(widget: HomeWidget) {
   const meta = getWidgetMeta(widget.type);
@@ -76,12 +92,21 @@ export function HomePage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [favoriteEditorOpen, setFavoriteEditorOpen] = useState(false);
   const [editingFavorite, setEditingFavorite] = useState<Favorite | null>(null);
+  const [favoriteEditorParentId, setFavoriteEditorParentId] = useState<string | null>(null);
+  const [folderEditorOpen, setFolderEditorOpen] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<FavoriteFolder | null>(null);
+  const [folderEditorParentId, setFolderEditorParentId] = useState<string | null>(null);
+  const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const favorites = useHomeStore((state) => state.favorites);
   const widgets = useHomeStore((state) => state.widgets);
   const preferences = useHomeStore((state) => state.preferences);
   const addFavorite = useHomeStore((state) => state.addFavorite);
+  const addFavoriteToFolder = useHomeStore((state) => state.addFavoriteToFolder);
+  const addFavoriteFolder = useHomeStore((state) => state.addFavoriteFolder);
   const updateFavorite = useHomeStore((state) => state.updateFavorite);
+  const updateFavoriteFolder = useHomeStore((state) => state.updateFavoriteFolder);
   const removeFavorite = useHomeStore((state) => state.removeFavorite);
+  const moveFavoriteItem = useHomeStore((state) => state.moveFavoriteItem);
   const addWidget = useHomeStore((state) => state.addWidget);
   const setLayouts = useHomeStore((state) => state.setLayouts);
   const compactWidgets = useHomeStore((state) => state.compactWidgets);
@@ -110,6 +135,9 @@ export function HomePage() {
   // Track active grid breakpoint for mobile-disabled drag/resize.
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const lastLayoutSigRef = useRef<string>("");
+  const folderDropTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFolderDropIdRef = useRef<string | null>(null);
+  const [armedFolderDropId, setArmedFolderDropId] = useState<string | null>(null);
   const [workspaceWidth, setWorkspaceWidth] = useState<number | null>(null);
   const breakpoint: "lg" | "md" | "sm" = (() => {
     const w = workspaceWidth ?? 1040;
@@ -169,28 +197,80 @@ export function HomePage() {
     document.body.classList.toggle("dnd-active", active);
   }, []);
 
+  const clearFolderDropIntent = useCallback(() => {
+    if (folderDropTimerRef.current) {
+      clearTimeout(folderDropTimerRef.current);
+      folderDropTimerRef.current = null;
+    }
+    pendingFolderDropIdRef.current = null;
+    setArmedFolderDropId(null);
+  }, []);
+
+  const scheduleFolderDropIntent = useCallback((overId: string | null) => {
+    let folderId = overId?.startsWith("folder-drop-") ? overId.slice("folder-drop-".length) : null;
+    if (!folderId) {
+      const item = findFavoriteItem(favorites, overId);
+      folderId = item?.type === "folder" ? item.id : null;
+    }
+    if (folderId === pendingFolderDropIdRef.current) return;
+    if (folderDropTimerRef.current) clearTimeout(folderDropTimerRef.current);
+    pendingFolderDropIdRef.current = folderId;
+    setArmedFolderDropId(null);
+    if (!folderId) return;
+    folderDropTimerRef.current = setTimeout(() => {
+      if (pendingFolderDropIdRef.current === folderId) setArmedFolderDropId(folderId);
+    }, FOLDER_DROP_ARM_MS);
+  }, [favorites]);
+
+  function onDragOver(event: DragOverEvent) {
+    const overId = event.over ? String(event.over.id) : null;
+    scheduleFolderDropIntent(overId);
+  }
+
   function onDragEnd(event: DragEndEvent) {
     setDraggingClass(false);
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      clearFolderDropIntent();
+      return;
+    }
     const activeId = String(active.id);
     const overId = String(over.id);
+    if (overId.startsWith("folder-drop-")) {
+      const folderId = overId.slice("folder-drop-".length);
+      if (armedFolderDropId === folderId) {
+        moveFavoriteItem(activeId, folderId);
+      } else {
+        reorderFavorites(activeId, folderId);
+      }
+      clearFolderDropIntent();
+      return;
+    }
     if (activeId.startsWith("zone-") && overId.startsWith("zone-")) {
       reorderZones(activeId, overId);
       return;
     }
-    if (activeId.startsWith("fav") && overId.startsWith("fav")) {
+    if ((activeId.startsWith("fav") || activeId.startsWith("folder")) && (overId.startsWith("fav") || overId.startsWith("folder"))) {
+      const overItem = findFavoriteItem(favorites, overId);
+      if (overItem?.type === "folder" && armedFolderDropId === overItem.id) {
+        moveFavoriteItem(activeId, overItem.id);
+        clearFolderDropIntent();
+        return;
+      }
       reorderFavorites(activeId, overId);
     }
+    clearFolderDropIntent();
   }
 
-  function openNewFavorite() {
+  function openNewFavorite(parentId: string | null = null) {
     setEditingFavorite(null);
+    setFavoriteEditorParentId(parentId);
     setFavoriteEditorOpen(true);
   }
 
   function openFavoriteEdit(favorite: Favorite) {
     setEditingFavorite(favorite);
+    setFavoriteEditorParentId(null);
     setFavoriteEditorOpen(true);
   }
 
@@ -199,7 +279,39 @@ export function HomePage() {
       updateFavorite(editingFavorite.id, favorite);
       return;
     }
+    if (favoriteEditorParentId) {
+      addFavoriteToFolder(favoriteEditorParentId, favorite);
+      return;
+    }
     addFavorite(favorite);
+  }
+
+  function openNewFolder(parentId: string | null = null) {
+    setEditingFolder(null);
+    setFolderEditorParentId(parentId);
+    setFolderEditorOpen(true);
+  }
+
+  function openFolderEdit(folder: FavoriteFolder) {
+    setEditingFolder(folder);
+    setFolderEditorParentId(null);
+    setFolderEditorOpen(true);
+  }
+
+  function saveFolder(folder: FavoriteFolderInput) {
+    if (editingFolder) {
+      updateFavoriteFolder(editingFolder.id, folder);
+      return;
+    }
+    addFavoriteFolder(folderEditorParentId, folder);
+  }
+
+  function editFavoriteItem(item: FavoriteItem) {
+    if (item.type === "folder") {
+      openFolderEdit(item);
+      return;
+    }
+    openFavoriteEdit(item);
   }
 
   if (!isMounted) {
@@ -297,10 +409,18 @@ export function HomePage() {
           </div>
           <button
             type="button"
-            onClick={openNewFavorite}
+            onClick={() => openNewFavorite()}
             className="rounded-full px-3 py-1 font-medium transition hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
           >
-            Add
+            Add website
+          </button>
+          <button
+            type="button"
+            onClick={() => openNewFolder()}
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1 font-medium transition hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          >
+            <FiFolder />
+            Folder
           </button>
         </div>
         <SortableContext items={favoriteIds} strategy={rectSortingStrategy}>
@@ -311,13 +431,15 @@ export function HomePage() {
                 favorite={favorite}
                 editMode={preferences.editMode}
                 scale={preferences.favoriteScale}
-                onEdit={() => openFavoriteEdit(favorite)}
+                onEdit={() => editFavoriteItem(favorite)}
                 onRemove={() => removeFavorite(favorite.id)}
+                onOpenFolder={(id) => setOpenFolderId(id)}
+                folderDropIntent={armedFolderDropId === favorite.id ? "armed" : "idle"}
               />
             ))}
             <button
               type="button"
-              onClick={openNewFavorite}
+              onClick={() => openNewFavorite()}
               className="flex min-h-[94px] flex-col items-center justify-center gap-2 rounded-[18px] border border-[color:var(--border)] bg-[color:var(--tile)] p-3 text-center shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:shadow-tile"
             >
               <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-[color:var(--surface-strong)] text-2xl text-[color:var(--muted)]">
@@ -496,7 +618,11 @@ export function HomePage() {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={() => setDraggingClass(true)}
-          onDragCancel={() => setDraggingClass(false)}
+          onDragCancel={() => {
+            setDraggingClass(false);
+            clearFolderDropIntent();
+          }}
+          onDragOver={onDragOver}
           onDragEnd={onDragEnd}
         >
           <SortableContext items={zoneSortableIds} strategy={verticalListSortingStrategy}>
@@ -521,8 +647,35 @@ export function HomePage() {
       <FavoriteEditor
         open={favoriteEditorOpen}
         favorite={editingFavorite}
-        onClose={() => setFavoriteEditorOpen(false)}
+        onClose={() => {
+          setFavoriteEditorOpen(false);
+          setFavoriteEditorParentId(null);
+        }}
         onSave={saveFavorite}
+      />
+      <FavoriteFolderEditor
+        open={folderEditorOpen}
+        folder={editingFolder}
+        onClose={() => {
+          setFolderEditorOpen(false);
+          setFolderEditorParentId(null);
+        }}
+        onSave={saveFolder}
+      />
+      <FavoriteFolderModal
+        open={Boolean(openFolderId && findFavoriteItem(favorites, openFolderId)?.type === "folder")}
+        rootItems={favorites}
+        folderId={openFolderId}
+        editMode={preferences.editMode}
+        scale={preferences.favoriteScale}
+        onClose={() => setOpenFolderId(null)}
+        onOpenFolder={(id) => setOpenFolderId(id)}
+        onEditItem={editFavoriteItem}
+        onRemoveItem={(id) => removeFavorite(id)}
+        onAddLink={(parentId) => openNewFavorite(parentId)}
+        onAddFolder={(parentId) => openNewFolder(parentId)}
+        onReorder={(activeId, overId, parentId) => reorderFavorites(activeId, overId, parentId)}
+        onMoveItem={(id, targetParentId) => moveFavoriteItem(id, targetParentId)}
       />
       {addWidgetSheetOpen ? (
         <div

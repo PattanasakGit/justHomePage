@@ -129,7 +129,8 @@ export type WidgetVariantSpec = {
 
 export type ZoneId = "search" | "favorites" | "workspace";
 
-export type Favorite = {
+export type FavoriteLink = {
+  type: "link";
   id: string;
   title: string;
   url: string;
@@ -137,7 +138,23 @@ export type Favorite = {
   iconUrl?: string | null;
 };
 
-export type FavoriteInput = Omit<Favorite, "id">;
+export type FavoriteFolder = {
+  type: "folder";
+  id: string;
+  title: string;
+  icon: string;
+  iconUrl?: string | null;
+  children: FavoriteItem[];
+};
+
+export type FavoriteItem = FavoriteLink | FavoriteFolder;
+
+export type Favorite = FavoriteLink;
+export type FavoriteInput = Omit<FavoriteLink, "id" | "type"> & { type?: "link" };
+export type FavoriteFolderInput = Omit<FavoriteFolder, "id" | "type" | "children"> & {
+  type?: "folder";
+  children?: FavoriteItem[];
+};
 
 export type HomeWidget = {
   id: string;

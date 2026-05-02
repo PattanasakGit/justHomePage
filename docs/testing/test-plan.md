@@ -5,6 +5,7 @@
 - Search URL generation and provider fallback.
 - Search provider registry includes web, media, and AI engines.
 - Store actions for favorites, widgets, and preferences.
+- Store actions for nested favorite folders: migration, add root/nested folder, add nested website, recursive remove, same-parent reorder.
 - Store actions for editing favorites and setting/clearing custom wallpaper images without changing theme.
 - Store action for changing font preference.
 - Store action for theme controls: accent color, opacity, blur, contrast, favorite scale, and widget scale.
@@ -22,6 +23,7 @@
 - Search bar provider selection and submit behavior.
 - Search provider dropdown is inside the search input; provider chips are not shown below.
 - Favorite tile rendering.
+- Favorite folder tile and folder modal rendering, including breadcrumbs and empty state actions.
 - Widget add/remove/edit flows.
 - Settings background changes.
 - Settings theme color changes.
@@ -67,6 +69,12 @@
 - Unit (`src/components/icons/icon-catalog.test.ts`): unique ids, every entry has at least one keyword, `LETTER_ICON` first, `getBrandIcon` returns a renderer for every entry, `getCatalogByCategory` filters, `searchCatalog` matches by label and keyword, empty query returns the full catalog, neutral icon set is non-trivial.
 - Component (`src/components/icons/icon-picker.test.tsx`): search filters, category chip filters, selection callback, empty-state message.
 - Manual e2e: open favorite editor → search "mail" → select Mail → save → tile renders the mail icon. Repeat with a brand icon (Spotify) and verify brand color. Mobile viewport: picker keeps Save button reachable.
+
+## Favorites Folders
+
+- Unit (`src/stores/home-store.test.ts`): legacy flat favorites migrate to root `FavoriteLink` items; `addFavoriteFolder` creates empty folders; `addFavoriteToFolder` appends inside a folder; `removeFavorite` recursively removes folders and children; `moveFavoriteItem` moves root↔nested items and refuses folder→descendant moves; `reorderFavorites(active, over, parentId)` affects only siblings in the same folder.
+- Component (`src/components/homepage/favorite-folder-modal.test.tsx`): folder tiles open folder modal instead of navigating; folder tiles expose the distinctive folder plate marker; modal breadcrumb drills into nested folders; empty folder state exposes Add website and Add folder.
+- Manual e2e: create a root folder → quick-drop an existing favorite near/on it and confirm it reorders rather than moves → drag the favorite onto the folder and hold until the folder ring highlights, then drop and confirm the moved item appears → create a subfolder → hold-drag the item into the subfolder → drag it onto the Favorites breadcrumb to move it back to root → reload and confirm the tree persists.
 
 ## Widgets Expansion
 

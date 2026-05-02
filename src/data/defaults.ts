@@ -1,18 +1,18 @@
-import type { Favorite, HomeWidget, Preferences } from "@/lib/types";
+import type { FavoriteItem, HomeWidget, Preferences } from "@/lib/types";
 
-export const defaultFavorites: Favorite[] = [
-  { id: "fav-openai", title: "ChatGPT", url: "https://chat.openai.com", icon: "openai" },
-  { id: "fav-github", title: "GitHub", url: "https://github.com", icon: "github" },
-  { id: "fav-notion", title: "Notion", url: "https://notion.so", icon: "notion" },
-  { id: "fav-youtube", title: "YouTube", url: "https://youtube.com", icon: "play" },
-  { id: "fav-gmail", title: "Gmail", url: "https://mail.google.com", icon: "gmail" },
-  { id: "fav-drive", title: "Drive", url: "https://drive.google.com", icon: "drive" },
-  { id: "fav-calendar", title: "Calendar", url: "https://calendar.google.com", icon: "calendar" },
-  { id: "fav-reddit", title: "Reddit", url: "https://reddit.com", icon: "reddit" },
-  { id: "fav-x", title: "X", url: "https://x.com", icon: "x" },
-  { id: "fav-linkedin", title: "LinkedIn", url: "https://linkedin.com", icon: "linkedin" },
-  { id: "fav-spotify", title: "Spotify", url: "https://spotify.com", icon: "spotify" },
-  { id: "fav-figma", title: "Figma", url: "https://figma.com", icon: "figma" },
+export const defaultFavorites: FavoriteItem[] = [
+  { type: "link", id: "fav-openai", title: "ChatGPT", url: "https://chat.openai.com", icon: "openai" },
+  { type: "link", id: "fav-github", title: "GitHub", url: "https://github.com", icon: "github" },
+  { type: "link", id: "fav-notion", title: "Notion", url: "https://notion.so", icon: "notion" },
+  { type: "link", id: "fav-youtube", title: "YouTube", url: "https://youtube.com", icon: "play" },
+  { type: "link", id: "fav-gmail", title: "Gmail", url: "https://mail.google.com", icon: "gmail" },
+  { type: "link", id: "fav-drive", title: "Drive", url: "https://drive.google.com", icon: "drive" },
+  { type: "link", id: "fav-calendar", title: "Calendar", url: "https://calendar.google.com", icon: "calendar" },
+  { type: "link", id: "fav-reddit", title: "Reddit", url: "https://reddit.com", icon: "reddit" },
+  { type: "link", id: "fav-x", title: "X", url: "https://x.com", icon: "x" },
+  { type: "link", id: "fav-linkedin", title: "LinkedIn", url: "https://linkedin.com", icon: "linkedin" },
+  { type: "link", id: "fav-spotify", title: "Spotify", url: "https://spotify.com", icon: "spotify" },
+  { type: "link", id: "fav-figma", title: "Figma", url: "https://figma.com", icon: "figma" },
 ];
 
 export const defaultWidgets: HomeWidget[] = [

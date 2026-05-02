@@ -14,6 +14,9 @@ import {
 import type {
   BackgroundId,
   Favorite,
+  FavoriteFolder,
+  FavoriteFolderInput,
+  FavoriteItem,
   FavoriteInput,
   FontId,
   HomeWidget,
@@ -27,13 +30,17 @@ import type {
 const GRID_COLS = 12;
 
 export type HomeState = {
-  favorites: Favorite[];
+  favorites: FavoriteItem[];
   widgets: HomeWidget[];
   preferences: Preferences;
   addFavorite: (favorite: FavoriteInput) => void;
+  addFavoriteToFolder: (parentId: string | null, favorite: FavoriteInput) => void;
+  addFavoriteFolder: (parentId: string | null, folder: FavoriteFolderInput) => void;
   updateFavorite: (id: string, favorite: FavoriteInput) => void;
+  updateFavoriteFolder: (id: string, folder: FavoriteFolderInput) => void;
   removeFavorite: (id: string) => void;
-  reorderFavorites: (activeId: string, overId: string) => void;
+  moveFavoriteItem: (id: string, targetParentId: string | null) => void;
+  reorderFavorites: (activeId: string, overId: string, parentId?: string | null) => void;
   addWidget: (type: WidgetType) => void;
   removeWidget: (id: string) => void;
   setVariant: (id: string, variant: string) => void;
@@ -57,6 +64,165 @@ export type HomeState = {
 };
 
 const makeId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+function createFavoriteLink(favorite: FavoriteInput): Favorite {
+  return {
+    type: "link",
+    id: makeId("fav"),
+    title: favorite.title,
+    url: favorite.url,
+    icon: favorite.icon,
+    iconUrl: favorite.iconUrl ?? null,
+  };
+}
+
+function createFavoriteFolder(folder: FavoriteFolderInput): FavoriteFolder {
+  return {
+    type: "folder",
+    id: makeId("folder"),
+    title: folder.title,
+    icon: folder.icon,
+    iconUrl: folder.iconUrl ?? null,
+    children: folder.children ?? [],
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function normalizeFavoriteItem(item: unknown): FavoriteItem | null {
+  if (!isRecord(item)) return null;
+  const id = typeof item.id === "string" ? item.id : makeId("fav");
+  const title = typeof item.title === "string" ? item.title : "Untitled";
+  const icon = typeof item.icon === "string" ? item.icon : "fi-bookmark";
+  const iconUrl = typeof item.iconUrl === "string" ? item.iconUrl : null;
+  if (item.type === "folder") {
+    const children = Array.isArray(item.children)
+      ? item.children.flatMap((child) => {
+          const normalized = normalizeFavoriteItem(child);
+          return normalized ? [normalized] : [];
+        })
+      : [];
+    return { type: "folder", id, title, icon, iconUrl, children };
+  }
+
+  const url = typeof item.url === "string" ? item.url : "";
+  return { type: "link", id, title, url, icon, iconUrl };
+}
+
+function normalizeFavorites(items: unknown): FavoriteItem[] {
+  if (!Array.isArray(items)) return defaultFavorites;
+  return items.flatMap((item) => {
+    const normalized = normalizeFavoriteItem(item);
+    return normalized ? [normalized] : [];
+  });
+}
+
+function appendFavorite(items: FavoriteItem[], parentId: string | null, next: FavoriteItem): FavoriteItem[] {
+  if (!parentId) return [...items, next];
+  return items.map((item) => {
+    if (item.type !== "folder") return item;
+    if (item.id === parentId) return { ...item, children: [...item.children, next] };
+    return { ...item, children: appendFavorite(item.children, parentId, next) };
+  });
+}
+
+function updateFavoriteLink(items: FavoriteItem[], id: string, favorite: FavoriteInput): FavoriteItem[] {
+  return items.map((item) => {
+    if (item.type === "folder") return { ...item, children: updateFavoriteLink(item.children, id, favorite) };
+    return item.id === id
+      ? { ...item, title: favorite.title, url: favorite.url, icon: favorite.icon, iconUrl: favorite.iconUrl ?? null }
+      : item;
+  });
+}
+
+function updateFolder(items: FavoriteItem[], id: string, folder: FavoriteFolderInput): FavoriteItem[] {
+  return items.map((item) => {
+    if (item.type !== "folder") return item;
+    if (item.id === id) {
+      return { ...item, title: folder.title, icon: folder.icon, iconUrl: folder.iconUrl ?? null };
+    }
+    return { ...item, children: updateFolder(item.children, id, folder) };
+  });
+}
+
+function removeFavoriteItem(items: FavoriteItem[], id: string): FavoriteItem[] {
+  return items
+    .filter((item) => item.id !== id)
+    .map((item) => (item.type === "folder" ? { ...item, children: removeFavoriteItem(item.children, id) } : item));
+}
+
+function findFavoriteItemInTree(items: FavoriteItem[], id: string | null): FavoriteItem | null {
+  if (!id) return null;
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.type === "folder") {
+      const found = findFavoriteItemInTree(item.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function folderContainsItem(folder: FavoriteFolder, id: string): boolean {
+  return folder.children.some((child) => child.id === id || (child.type === "folder" && folderContainsItem(child, id)));
+}
+
+function extractFavoriteItem(items: FavoriteItem[], id: string): { items: FavoriteItem[]; extracted: FavoriteItem | null } {
+  let extracted: FavoriteItem | null = null;
+  const nextItems = items.flatMap((item): FavoriteItem[] => {
+    if (item.id === id) {
+      extracted = item;
+      return [];
+    }
+    if (item.type === "folder") {
+      const result = extractFavoriteItem(item.children, id);
+      if (result.extracted) {
+        extracted = result.extracted;
+        return [{ ...item, children: result.items }];
+      }
+    }
+    return [item];
+  });
+  return { items: nextItems, extracted };
+}
+
+function moveFavoriteItemInTree(items: FavoriteItem[], id: string, targetParentId: string | null): FavoriteItem[] {
+  if (id === targetParentId) return items;
+  const moving = findFavoriteItemInTree(items, id);
+  if (!moving) return items;
+  const target = targetParentId ? findFavoriteItemInTree(items, targetParentId) : null;
+  if (targetParentId && target?.type !== "folder") return items;
+  if (moving.type === "folder" && targetParentId && folderContainsItem(moving, targetParentId)) return items;
+
+  const extracted = extractFavoriteItem(items, id);
+  if (!extracted.extracted) return items;
+  return appendFavorite(extracted.items, targetParentId, extracted.extracted);
+}
+
+function reorderFavoriteItems(
+  items: FavoriteItem[],
+  activeId: string,
+  overId: string,
+  parentId: string | null,
+): FavoriteItem[] {
+  if (!parentId) {
+    const oldIndex = items.findIndex((item) => item.id === activeId);
+    const newIndex = items.findIndex((item) => item.id === overId);
+    return oldIndex < 0 || newIndex < 0 ? items : arrayMove(items, oldIndex, newIndex);
+  }
+
+  return items.map((item) => {
+    if (item.type !== "folder") return item;
+    if (item.id === parentId) {
+      const oldIndex = item.children.findIndex((child) => child.id === activeId);
+      const newIndex = item.children.findIndex((child) => child.id === overId);
+      return oldIndex < 0 || newIndex < 0 ? item : { ...item, children: arrayMove(item.children, oldIndex, newIndex) };
+    }
+    return { ...item, children: reorderFavoriteItems(item.children, activeId, overId, parentId) };
+  });
+}
 
 function rectsOverlap(a: WidgetLayout, b: WidgetLayout): boolean {
   return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
@@ -112,22 +278,34 @@ const createHomeState: StateCreator<HomeState> = (set) => ({
   preferences: defaultPreferences,
   addFavorite: (favorite) =>
     set((state) => ({
-      favorites: [...state.favorites, { ...favorite, id: makeId("fav") }],
+      favorites: [...state.favorites, createFavoriteLink(favorite)],
+    })),
+  addFavoriteToFolder: (parentId, favorite) =>
+    set((state) => ({
+      favorites: appendFavorite(state.favorites, parentId, createFavoriteLink(favorite)),
+    })),
+  addFavoriteFolder: (parentId, folder) =>
+    set((state) => ({
+      favorites: appendFavorite(state.favorites, parentId, createFavoriteFolder(folder)),
     })),
   updateFavorite: (id, favorite) =>
     set((state) => ({
-      favorites: state.favorites.map((item) => (item.id === id ? { ...item, ...favorite } : item)),
+      favorites: updateFavoriteLink(state.favorites, id, favorite),
+    })),
+  updateFavoriteFolder: (id, folder) =>
+    set((state) => ({
+      favorites: updateFolder(state.favorites, id, folder),
     })),
   removeFavorite: (id) =>
     set((state) => ({
-      favorites: state.favorites.filter((favorite) => favorite.id !== id),
+      favorites: removeFavoriteItem(state.favorites, id),
     })),
-  reorderFavorites: (activeId, overId) =>
-    set((state) => {
-      const oldIndex = state.favorites.findIndex((item) => item.id === activeId);
-      const newIndex = state.favorites.findIndex((item) => item.id === overId);
-      return oldIndex < 0 || newIndex < 0 ? state : { favorites: arrayMove(state.favorites, oldIndex, newIndex) };
-    }),
+  moveFavoriteItem: (id, targetParentId) =>
+    set((state) => ({
+      favorites: moveFavoriteItemInTree(state.favorites, id, targetParentId),
+    })),
+  reorderFavorites: (activeId, overId, parentId = null) =>
+    set((state) => ({ favorites: reorderFavoriteItems(state.favorites, activeId, overId, parentId) })),
   addWidget: (type) =>
     set((state) => {
       const meta = getWidgetMeta(type);
@@ -316,6 +494,7 @@ export function migrateHomeState(persisted: unknown, _version: number): HomeStat
       wallpaperLuminance?: number | null;
     };
     widgets?: LegacyWidget[];
+    favorites?: unknown;
   };
 
   const rawWidgets: LegacyWidget[] = Array.isArray(state.widgets)
@@ -390,6 +569,7 @@ export function migrateHomeState(persisted: unknown, _version: number): HomeStat
 
   return {
     ...(state as HomeState),
+    favorites: normalizeFavorites(state.favorites),
     widgets,
     preferences,
   } as HomeState;
@@ -398,7 +578,7 @@ export function migrateHomeState(persisted: unknown, _version: number): HomeStat
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 7,
+    version: 8,
     migrate: (persisted, version) => migrateHomeState(persisted, version),
     partialize: (state) => ({
       favorites: state.favorites,

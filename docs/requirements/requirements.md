@@ -12,6 +12,8 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Search providers include classic web search plus AI providers such as ChatGPT, Claude, Gemini, Copilot, Perplexity, You.com, and Phind.
 - Favorite website list.
 - Add, edit, delete, and reorder favorite websites.
+- Organize favorites into folders and nested subfolders from the Favorites grid.
+- Folder tiles open an overlay that shows the current folder contents with breadcrumb navigation.
 - Default favorite website title/logo should come from website metadata when a URL is added.
 - Choose custom brand-style icons for favorite websites after metadata defaults are loaded.
 - A letter-avatar fallback is the default icon for new favorites — a colored circle with the first letter of the title, shown when no brand icon or metadata logo is selected.
@@ -55,6 +57,16 @@ Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
 - Custom-logo selection must scale beyond the brand-only set; the picker exposes search, category filters, and pagination.
 - All 32 brand icons remain available; ~60 curated neutral icons (Feather/`react-icons/fi`) are added across Productivity, Communication, Media, Money, Travel, and General.
 - Letter avatar remains the default fallback; selecting any icon clears the auto-detected `iconUrl`.
+
+## Favorites — Folders
+
+- Favorites are a nested tree of website links and folders.
+- Root favorites still render as the homepage tile grid; folder contents render in a modal/grid so deep structures do not crowd the first viewport.
+- Users can create folders at the root or inside any open folder.
+- Users can add website favorites at the root or inside any open folder.
+- Breadcrumbs support jumping from a deep folder back to any ancestor.
+- Dragging a favorite onto a folder and holding briefly arms "move into folder"; dropping before the hold completes reorders instead. Armed folder targets show a highlighted border/ring. Dragging an item in a folder onto a breadcrumb moves it back to that ancestor or root.
+- Removing a folder removes all nested children.
 
 ## Widgets — Pomodoro / Todo / Weather / Bookmark
 

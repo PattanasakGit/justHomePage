@@ -1,6 +1,6 @@
 import { defaultFavorites } from "@/data/defaults";
-import type { Favorite } from "@/lib/types";
+import type { FavoriteItem } from "@/lib/types";
 
-export async function listFavorites(): Promise<Favorite[]> {
+export async function listFavorites(): Promise<FavoriteItem[]> {
   return defaultFavorites;
 }

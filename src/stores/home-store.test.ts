@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createHomeStore, migrateHomeState } from "./home-store";
 import { getWidgetMeta } from "@/components/widgets/widget-registry";
-import type { HomeWidget, WidgetType } from "@/lib/types";
+import type { FavoriteFolder, HomeWidget, WidgetType } from "@/lib/types";
 
 function rectOverlap(
   a: { x: number; y: number; w: number; h: number },
@@ -15,7 +15,8 @@ describe("home store", () => {
     const store = createHomeStore();
     store.getState().addFavorite({ title: "Docs", url: "https://docs.example.com", icon: "sparkles" });
     const favorite = store.getState().favorites.find((item) => item.title === "Docs");
-    expect(favorite?.url).toBe("https://docs.example.com");
+    expect(favorite?.type).toBe("link");
+    expect(favorite?.type === "link" ? favorite.url : null).toBe("https://docs.example.com");
     store.getState().removeFavorite(favorite!.id);
     expect(store.getState().favorites.some((item) => item.id === favorite!.id)).toBe(false);
   });
@@ -29,11 +30,114 @@ describe("home store", () => {
       icon: "github",
     });
     expect(store.getState().favorites[0]).toMatchObject({
+      type: "link",
       id: favorite.id,
       title: "Edited",
       url: "https://edited.example.com",
       icon: "github",
     });
+  });
+
+  it("migrates flat favorites into root link items with stable ids", () => {
+    const next = migrateHomeState(
+      {
+        favorites: [{ id: "fav-docs", title: "Docs", url: "https://docs.example.com", icon: "fi-bookmark" }],
+      },
+      7,
+    );
+    expect(next.favorites[0]).toMatchObject({
+      type: "link",
+      id: "fav-docs",
+      title: "Docs",
+      url: "https://docs.example.com",
+    });
+  });
+
+  it("adds folders and nested links by parent folder id", () => {
+    const store = createHomeStore();
+    store.getState().addFavoriteFolder(null, { title: "Work", icon: "fi-folder" });
+    const folder = store.getState().favorites.find((item) => item.type === "folder" && item.title === "Work");
+    expect(folder).toMatchObject({ type: "folder", children: [] });
+
+    store.getState().addFavoriteToFolder(folder!.id, {
+      title: "Docs",
+      url: "https://docs.example.com",
+      icon: "fi-bookmark",
+    });
+
+    const updated = store.getState().favorites.find((item) => item.id === folder!.id);
+    expect(updated).toMatchObject({
+      type: "folder",
+      children: [expect.objectContaining({ type: "link", title: "Docs" })],
+    });
+  });
+
+  it("removes folders with nested children", () => {
+    const store = createHomeStore();
+    store.getState().addFavoriteFolder(null, { title: "Work", icon: "fi-folder" });
+    const folder = store.getState().favorites.find((item) => item.type === "folder" && item.title === "Work")!;
+    store.getState().addFavoriteToFolder(folder.id, {
+      title: "Docs",
+      url: "https://docs.example.com",
+      icon: "fi-bookmark",
+    });
+    store.getState().removeFavorite(folder.id);
+    expect(store.getState().favorites.some((item) => item.id === folder.id)).toBe(false);
+  });
+
+  it("reorders favorites only within the same parent", () => {
+    const store = createHomeStore();
+    store.getState().addFavoriteFolder(null, { title: "Work", icon: "fi-folder" });
+    const folder = store.getState().favorites.find((item) => item.type === "folder" && item.title === "Work")!;
+    store.getState().addFavoriteToFolder(folder.id, { title: "A", url: "https://a.example.com", icon: "fi-bookmark" });
+    store.getState().addFavoriteToFolder(folder.id, { title: "B", url: "https://b.example.com", icon: "fi-bookmark" });
+    const nested = (store.getState().favorites.find((item) => item.id === folder.id) as FavoriteFolder).children;
+    store.getState().reorderFavorites(nested[1].id, nested[0].id, folder.id);
+    const after = (store.getState().favorites.find((item) => item.id === folder.id) as FavoriteFolder).children;
+    expect(after.map((item) => item.title)).toEqual(["B", "A"]);
+  });
+
+  it("moves an existing root favorite into a folder", () => {
+    const store = createHomeStore();
+    store.getState().addFavorite({ title: "Docs", url: "https://docs.example.com", icon: "fi-bookmark" });
+    store.getState().addFavoriteFolder(null, { title: "Work", icon: "fi-folder" });
+    const docs = store.getState().favorites.find((item) => item.title === "Docs")!;
+    const folder = store.getState().favorites.find((item) => item.type === "folder" && item.title === "Work") as FavoriteFolder;
+
+    store.getState().moveFavoriteItem(docs.id, folder.id);
+
+    const rootTitles = store.getState().favorites.map((item) => item.title);
+    const updatedFolder = store.getState().favorites.find((item) => item.id === folder.id) as FavoriteFolder;
+    expect(rootTitles).not.toContain("Docs");
+    expect(updatedFolder.children.map((item) => item.title)).toContain("Docs");
+  });
+
+  it("moves an existing nested favorite back to the root", () => {
+    const store = createHomeStore();
+    store.getState().addFavoriteFolder(null, { title: "Work", icon: "fi-folder" });
+    const folder = store.getState().favorites.find((item) => item.type === "folder" && item.title === "Work") as FavoriteFolder;
+    store.getState().addFavoriteToFolder(folder.id, { title: "Docs", url: "https://docs.example.com", icon: "fi-bookmark" });
+    const nested = (store.getState().favorites.find((item) => item.id === folder.id) as FavoriteFolder).children[0];
+
+    store.getState().moveFavoriteItem(nested.id, null);
+
+    const updatedFolder = store.getState().favorites.find((item) => item.id === folder.id) as FavoriteFolder;
+    expect(updatedFolder.children).toHaveLength(0);
+    expect(store.getState().favorites.map((item) => item.title)).toContain("Docs");
+  });
+
+  it("does not move a folder into one of its own descendants", () => {
+    const store = createHomeStore();
+    store.getState().addFavoriteFolder(null, { title: "Work", icon: "fi-folder" });
+    const work = store.getState().favorites.find((item) => item.type === "folder" && item.title === "Work") as FavoriteFolder;
+    store.getState().addFavoriteFolder(work.id, { title: "AI", icon: "fi-folder" });
+    const ai = (store.getState().favorites.find((item) => item.id === work.id) as FavoriteFolder).children[0] as FavoriteFolder;
+
+    store.getState().moveFavoriteItem(work.id, ai.id);
+
+    const after = store.getState().favorites.find((item) => item.id === work.id) as FavoriteFolder;
+    expect(after).toBeDefined();
+    expect(after.children[0].id).toBe(ai.id);
   });
 
   it("setVariant switches the widget's variant and layout dimensions", () => {

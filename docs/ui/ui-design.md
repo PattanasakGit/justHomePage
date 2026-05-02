@@ -37,6 +37,7 @@ Three breakpoints, mapped 1:1 to Tailwind `sm` (640px) and `lg` (1024px). See [`
 | Card radius | `rounded-[18px]` | `rounded-[18px]` | `rounded-[18px]` |
 | Settings panel | bottom sheet (`rounded-t-[28px]`, `max-h-[88svh]`) | right drawer `m-3 rounded-[28px]` | right drawer `m-3 rounded-[28px]` |
 | Modals (favorite editor) | full-screen `h-[100svh]` with sticky save | centred `max-w-md` | centred `max-w-md` |
+| Folder modal | full-screen `h-[100svh]` | centred `max-w-4xl max-h-[86vh]` | centred `max-w-4xl max-h-[86vh]` |
 | Icon picker grid | `grid-cols-6` | `grid-cols-7` | `grid-cols-7` |
 | Search-pill `FiSliders` | hidden | visible (no-op TODO) | visible (no-op TODO) |
 | Provider chip label | hidden (icon + chevron only) | visible | visible |
@@ -74,6 +75,15 @@ A `useMediaQuery('(max-width: 639.98px)')` hook in `src/hooks/use-media-query.ts
 - Brand icons keep their brand color; neutral icons use `var(--ink)` so they remain readable across light/dark themes.
 - Search field height is 40px; chip row is horizontally scrollable on overflow; grid is `grid-cols-7 gap-2` with 11×11 px tiles.
 - Container uses `--surface` background, internal grid scrolls at `max-h-[260px]` to protect modal layout.
+
+## Favorite Folders
+
+- Folder tiles share the Favorite tile shell (`rounded-[18px]`, `--tile`, `--border`, `shadow-tile`) but the icon plate uses a folder silhouette: accent border, accent-soft fill, and a raised tab. This makes folders visually distinct from website icon plates at a glance.
+- Website favorite plates keep the existing light brand-icon exception; folder plates do not use hardcoded white.
+- Folder modals use `--popup` for the panel, `--border` separators, and `--surface` buttons. The breadcrumb row is horizontally scrollable and never wraps over grid content.
+- Folder plates only show the strong 4px `--accent-soft` ring after the move-into-folder intent delay arms. Before that, dragging near a folder keeps the normal sortable feel so users can still reorder beside folders.
+- Breadcrumb chips become highlighted drop targets during drag so users can move items out of nested folders.
+- Empty folder states use a dashed `--border` panel, one folder glyph, a short title, and scoped Add website/Add folder actions.
 
 ## Widgets
 

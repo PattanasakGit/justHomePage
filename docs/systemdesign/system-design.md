@@ -67,6 +67,22 @@ Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `
 - Store actions: `setZoneOrder`, `setZoneVisible(zone, visible)`, `reorderZones(activeId, overId)` (accepts `zone-` prefixed dnd-kit ids), `resetZones`.
 - DnD routing in `home-page.tsx` discriminates by id prefix: `zone-` → `reorderZones`, `fav` → `reorderFavorites`, `widget` → `reorderWidgets`.
 
+## Favorite Tree (Preferences v8)
+
+- Persisted store version is bumped to **8** so favorites can move from a flat `Favorite[]` into a nested tree.
+- `FavoriteItem` is a discriminated union:
+  - `FavoriteLink`: `{ type: "link", id, title, url, icon, iconUrl? }`
+  - `FavoriteFolder`: `{ type: "folder", id, title, icon, iconUrl?, children: FavoriteItem[] }`
+- `migrateHomeState` normalizes legacy flat favorites into root `FavoriteLink` items while preserving ids.
+- Store actions:
+  - `addFavorite(favorite)` adds a root link for existing callers.
+  - `addFavoriteToFolder(parentId, favorite)` adds a link at root (`null`) or inside a folder.
+  - `addFavoriteFolder(parentId, folder)` creates a folder at root or inside a folder.
+  - `updateFavorite`, `updateFavoriteFolder`, `removeFavorite`, `moveFavoriteItem(id, targetParentId)`, and `reorderFavorites(activeId, overId, parentId?)` walk the tree recursively.
+- `moveFavoriteItem` extracts the item from its current parent and appends it to the target folder/root. It is a no-op when the target does not exist, when the item does not exist, or when a folder would be moved into itself or one of its descendants.
+- DnD routing treats both `fav…` and `folder…` ids as favorite items; root reorder is handled by the page `DndContext`, while folder modal reorder passes the current folder id.
+- Folder tile drops are intentionally delayed: `onDragOver` must remain over a folder target for ~520ms before `onDragEnd` treats it as "move into folder". Dropping sooner falls back to same-level reorder. Breadcrumb targets remain immediate move-out targets.
+
 ## Widget Registry
 
 - All widget metadata lives in `src/components/widgets/widget-registry.ts`, keyed by `WidgetType`. Each entry exposes `{ label, defaultTitle, icon, defaultVariant, variants, defaultConfig }`.
@@ -92,4 +108,3 @@ Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `
 
 - `src/hooks/use-media-query.ts` — SSR-safe `matchMedia` subscription. Returns `false` on the server for stable hydration, then subscribes to live `change` events. Components that need a behavior split that pure CSS cannot express (modal vs full-screen, mobile-only widget body) call `useMediaQuery('(max-width: 639.98px)')`. Pure CSS responsive utilities (Tailwind `sm:` / `lg:`) are still preferred for spacing, typography, and grid columns.
 - Home-store actions `moveWidgetUp(id)` and `moveWidgetDown(id)` swap the y of the target widget with the previous / next neighbor in sm-stack ordering (sorted by `(y, x)`). They power the per-widget `↑ ↓` reorder buttons that replace drag/resize at `<sm`. Both are no-ops when the target is already at the boundary; they do not pack other widgets.
-
