@@ -1,42 +1,111 @@
 # Requirements
 
+> Version: **v2** (renewed 2026-10-07). Supersedes prior MVP that included weather and widgets.  
+> Status: **Signed by product owner** (desktop + mobile required).  
+> Implementation: **v2 homepage shipped on `feat/homepage-v2`** (liquid glass UI; weather/widgets removed from homepage).  
+> Demo reference: `docs/ui/demo-v2.html`
+
 ## Product Goal
 
-Build a minimal, fast browser homepage for daily use on MacBook and iPhone.
+A minimal, fast browser homepage for daily use — search and favorites first — on **desktop and mobile** (MacBook and iPhone as primary targets).
 
-## MVP Features
+## MVP Features (v2)
 
+### Search
 - Search input with multiple providers.
-- Provider shortcuts in the query.
-- Search engine picker lives inside the search input dropdown; no provider chip list below the search bar.
-- Search providers include classic web search plus AI providers such as ChatGPT, Claude, Gemini, Copilot, Perplexity, You.com, and Phind.
-- Favorite website list.
-- Add, edit, delete, and reorder favorite websites.
-- Default favorite website title/logo should come from website metadata when a URL is added.
-- Choose custom brand-style icons for favorite websites after metadata defaults are loaded.
-- A letter-avatar fallback is the default icon for new favorites — a colored circle with the first letter of the title, shown when no brand icon or metadata logo is selected.
-- Sync local timezone, location label, and current temperature in Celsius when browser location permission is granted.
-- Configurable theme color separated from wallpaper image.
-- Theme catalog covers warm, cool, dark, and neutral moods with at least two dozen distinct gradient bases grouped by Light/Dark tabs and tagged by style (soft, minimal, vibrant, neon).
-- Each theme ships with a hand-picked palette of primary accent colors that read well against its gradient — primary color is selected from the palette, not from a free color picker.
-- Theme controls include primary/accent color, text contrast, UI transparency, and UI blur strength.
-- Sliders show their current value as a chip and use a custom track + thumb that picks up the active accent color; drags update CSS variables directly so they stay smooth, committing to the store only on release.
-- Text contrast must remain readable over light/dark themes and uploaded wallpapers.
-- Upload a local wallpaper image, compress it for browser storage, preview it, and allow removal without changing theme color.
-- When wallpaper is present, wallpaper becomes the visible page background while theme only controls system colors.
-- Provide five font styles users can switch from settings.
-- Favorite tiles and workspace widgets can be resized independently.
-- Draggable widget workspace.
-- Add and remove widgets.
-- Clock, date, notes, and quick links widgets.
-- Responsive layout for desktop and mobile.
+- Provider shortcuts in the query (leading token + rest of query).
+- Search engine picker inside the search input dropdown (no provider chip row under the bar).
+- Providers include classic web search plus AI providers (e.g. ChatGPT, Claude, Gemini, Copilot, Perplexity, You.com, Phind).
+
+### Favorites
+- Favorite website list with add, edit, delete, and reorder.
+- Default title/logo from website metadata when a URL is added.
+- Optional custom brand-style icons after metadata defaults load.
+- Letter-avatar fallback (colored plate + first letter) when no brand/metadata logo is selected.
+
+### Folders / groups
+- Organize favorites into folders or groups (e.g. All + user groups).
+- Filter or switch group without leaving the homepage.
+
+### Import / export
+- Import bookmarks from a common browser export format.
+- Export current favorites (and groups) for backup/portability.
+- Entry points visible in UI (not buried).
+
+### Theme and wallpaper
+- Theme color separated from wallpaper image.
+- Theme catalog with light/dark moods; readable contrast over themes and wallpapers.
+- Controls for primary/accent color and text contrast as needed for readability.
+- Upload local wallpaper (compress for browser storage), preview, and remove without changing theme color.
+- When wallpaper is present, it is the visible page background; theme controls system colors.
+
+### Calm empty state
+- When the user has no favorites yet, show a calm, uncluttered empty state (short copy + clear Add / Import actions only).
+
+### Persistence
+- Local-first: Zustand (or equivalent client persist) is the live source of truth for MVP.
+- API + libSQL scaffold may remain in the repo but is **not** required to hydrate the UI in v2 MVP.
+
+## Explicitly out of scope (v2 MVP)
+
+- Weather / location temperature.
+- Widgets workspace (clock, date, notes, quick-links widgets, drag widget board).
+- Cloud sync / accounts.
+- Heavy third-party integrations (Gmail, Calendar, Spotify, etc.).
+- Multi-page cloud workspaces (start.me-style).
 
 ## Non-Functional Requirements
 
-- First screen is the usable app, not a landing page.
-- Fast startup with no external API dependency for core rendering.
-- Drag and drop should avoid expensive visual effects while dragging and keep favorite/widget sorting scopes independent.
-- Weather/location enhancement may fail gracefully when permission, network, or API access is unavailable.
+- **Responsive:** first-class **desktop and mobile** layouts (usable at ~375px width and at desktop widths). Tap targets ≥44px on mobile.
+- First screen is the usable app, not a marketing landing page.
+- Fast startup; core UI usable without network.
 - Accessible labels for icon-only controls.
-- Zustand for client interaction state.
-- SQLite/libSQL data boundary for future persistence.
+- Package manager and scripts: Bun (`bun install`, `bun run dev`, `bun run test`, `bun run typecheck`, `bun run build`).
+- Theme tokens preferred over hardcoded white/black text fills (see `docs/ui` / knowledge rules).
+
+## Keep / Drop / Add (decision log)
+
+| Decision | Items |
+|----------|--------|
+| Keep | Search, favorites CRUD/reorder/icons, theme/wallpaper, local persist, desktop+mobile |
+| Add | Folders/groups, import/export, calm empty state |
+| Drop (v2) | Weather, widgets |
+| Defer | Cloud sync, heavy integrations, DB hydration of UI |
+
+## Related artifacts
+
+- UX demo: `docs/ui/demo-v2.html`
+- Knowledge rules: `docs/agents/knowledge-rules.md`
+
+## Tech decisions (v2)
+
+- UI components: **shadcn/ui** (owned copies in-repo), customized to product tokens — not a locked vendor theme.
+- Stack: Next 16, React 19, Tailwind 4, shadcn/ui, Zustand, Bun, Vitest/Playwright.
+
+## Customization (v2 — signed)
+
+Direction: **beautiful, minimal, fast/light**, with **free personalization** within bounded axes.
+
+### In MVP
+- Theme light/dark + accent colors
+- Wallpaper upload/remove
+- Font set (limited curated options)
+- UI transparency / text contrast strength
+- Favorite tile size + grid density
+- Show/hide non-essential chrome where it keeps the page calm
+
+### Deferred
+- Custom CSS escape hatch
+- Multi-page layouts
+- Widget plugins / heavy integrations
+
+## UI / IA decisions (signed 2026-10-07 evening)
+
+- Visual reference: Apple.com web techniques + flat layered glass (not 3D).
+- Search: **Google only** (remove multi-provider UI).
+- Typography: **Mitr** (Thasadith optional); chrome icons: **Phosphor** Light/Regular.
+- Favorite icons: squircle plates; prefer site metadata / apple-touch, then SVG, then letter-avatar.
+- Navigation: **toggleable sidebar** (desktop collapse + mobile full-screen) for Library — folders, add folder, add bookmark (folder optional / None).
+- Settings: redesigned grouped layout; icon size presets S–XL.
+- No cluttered folder rail / + strip on main canvas; no harsh double horizontal bars.
+- Spec of record: `docs/ui/demo-v2.html` + `docs/ui/ui-design.md`.

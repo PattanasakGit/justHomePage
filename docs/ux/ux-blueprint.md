@@ -1,27 +1,40 @@
 # UX Blueprint
 
+> Last verified against codebase: 2026-10-07 (branch `feat/homepage-v2`).  
+> Visual reference: `docs/ui/demo-v2.html` (Apple liquid glass).
+
 ## Primary Screen
 
-- Header: app name, edit mode, settings.
-- Search: large input with compact provider selector.
-- Favorites: compact draggable icon tiles.
-- Favorites management: add/edit modal with name, URL, and logo picker.
-- Workspace: draggable widgets below favorites.
-- Settings: side drawer on desktop, full-screen feeling on mobile.
+- Topbar icon buttons (import / export / customize); chrome can be hidden.
+- Hero greeting + calm subtitle (no weather).
+- Search: pill glass bar with in-bar provider menu + submit; shortcut hint when chrome shown.
+- Favorites: folder tabs (All + user folders), density-aware glass tile grid, Add tile.
+- Empty state: short copy + Add Favorite / Import only.
+- Customize: bottom sheet (mobile) / centered panel (desktop) with bounded personalization axes.
 
 ## Interaction Rules
 
-- Enter submits search.
-- Shortcuts: `g`, `d`, `b`, `yt`, `gh`, `p`.
-- Edit mode reveals widget creation and drag handles.
-- Add controls remain discoverable even outside edit mode for favorites.
-- Background settings include theme thumbnails plus an image upload target.
-- Normal mode keeps chrome minimal.
-- Mobile layout stacks widgets and keeps tap targets at least 44px.
+- Enter submits search; leading shortcuts switch provider (`g`, `yt`, `ai`, …).
+- Folder tabs filter without leaving the page.
+- Tile ··· opens edit; long-press/context on ··· can remove (desktop hover reveals ···).
+- Import/export entry points are visible in the topbar when chrome is shown; empty state also offers Import.
+- Tap targets ≥44px; safe-area insets honored; responsive 3 → 4 → 6 column grid.
 
-## Auto Text Contrast
+## Materials
 
-- Auto contrast keeps text readable across themes and uploaded wallpapers.
-- Without a wallpaper, only the graphite theme switches to light text.
-- With a wallpaper, the uploaded image is sampled for average luminance; dark images (luminance < 0.55) flip to light text, bright images keep dark text.
-- Users can override auto by picking Dark or Light text explicitly in Settings → Theme.
+- Frost heavy (~40 blur, saturate 1.8) on search, customize sheet, chrome buttons, empty state.
+- Lighter frost (~20) on favorite tiles.
+- No blur-radius animation; respect reduced transparency / reduced motion.
+
+## Customization axes
+
+- Theme light/dark + accent swatches (default iOS blue `#007AFF` / dark `#0A84FF`)
+- Font set, transparency, blur slider
+- Contrast soft / normal / strong
+- Density comfort / cozy / compact
+- Chrome shown / hidden
+- Wallpaper upload / clear
+
+## Dropped from UI (v2)
+
+Weather/location strip and widget workspace.

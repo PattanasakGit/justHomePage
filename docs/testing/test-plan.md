@@ -1,46 +1,28 @@
 # Test Plan
 
-## Unit
+> Last verified against codebase: 2026-10-07 (branch `feat/homepage-v2`).
 
-- Search URL generation and provider fallback.
-- Search provider registry includes web, media, and AI engines.
-- Store actions for favorites, widgets, and preferences.
-- Store actions for editing favorites and setting/clearing custom wallpaper images without changing theme.
-- Store action for changing font preference.
-- Store action for theme controls: accent color, opacity, blur, contrast, favorite scale, and widget scale.
-- Theme utility CSS variable generation and readable text pairs.
-- Auto contrast resolution: dark wallpapers flip to light text, bright wallpapers keep dark text, missing luminance falls back to dark.
-- Auto contrast resolution treats every dark theme (graphite, ocean, forest, midnight, nebula, plum) the same way without a wallpaper.
-- Average luminance computation handles white, black, mid-tone, and empty pixel buffers.
-- Letter-avatar helper returns first character (uppercased), a fallback bullet for empty input, and a stable hex color per seed.
-- Website metadata extraction and favicon fallback.
-- Open-Meteo forecast URL generation with Celsius and automatic timezone.
-- Date and clock formatting helpers.
+## Unit (present under `src/**/*.test.ts`)
 
-## Component
+- Search URL generation, provider registry, shortcuts.
+- Store: favorites CRUD/reorder; folders add/rename/remove/filter; import/export bookmarks; chrome/density/contrastStrength/appearance; wallpaper; font; theme controls.
+- Bookmarks Netscape HTML export/import and round-trip.
+- Theme CSS variables (blur/surface-alpha), readable text pairs + contrast strength, auto contrast resolution.
+- Letter-avatar, site-metadata, image luminance, URL helpers.
+- Weather helper unit tests remain (API unused by homepage UI).
 
-- Search bar provider selection and submit behavior.
-- Search provider dropdown is inside the search input; provider chips are not shown below.
-- Favorite tile rendering.
-- Widget add/remove/edit flows.
-- Settings background changes.
-- Settings theme color changes.
-- Favorite add/edit modal opens and saves name, URL, and logo.
-- Wallpaper image upload compresses and updates the page background layer.
-- Uploaded wallpaper visually overrides theme gradient while theme tokens remain active.
-- Font selector changes the page body font class.
-- Theme controls update body CSS variables for accent color, glass opacity, blur, and contrast.
-- Favorite/widget size controls change tile heights and widget grid density.
-- Drag starts add `dnd-active` and drag end/cancel removes it.
-- Location/weather enhancement displays Celsius temperature or graceful unavailable state.
+## Component (planned)
 
-## E2E
+- Search bar provider selection and submit.
+- Favorite tile + folder tabs.
+- Customize sheet axes (appearance, accent, density, chrome, wallpaper).
+- Empty state Add / Import.
+- Drag start adds `dnd-active`; end/cancel removes it.
 
-- Homepage loads.
-- Search navigates with encoded query.
-- Change background.
-- Add/edit/remove notes widget.
-- Mobile smoke path.
+## E2E (`tests/e2e/home.spec.ts`)
+
+- Homepage loads; search navigates with encoded query.
+- Customize sheet opens; Dark appearance sets `data-theme="dark"`.
 
 ## Commands
 
@@ -48,10 +30,9 @@
 - Unit: `bun run test`
 - Typecheck: `bun run typecheck`
 - Build: `bun run build`
+- E2E: `bun run test:e2e`
 
 ## Accessibility
 
-- Icon-only buttons have names.
-- Search input has a label.
-- Focus rings are visible.
-- Settings dialog has role and modal semantics.
+- Icon-only buttons have names; search labeled; focus rings visible.
+- Customize sheet uses dialog/sheet semantics; folder tabs use `role="tab"`.

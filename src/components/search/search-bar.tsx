@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useRef, useState } from "react";
-import { FiChevronDown, FiSearch, FiSliders } from "react-icons/fi";
+import { FiChevronDown, FiArrowRight } from "react-icons/fi";
 import { getBrandIcon } from "@/components/icons/brand-icon";
 import { buildSearchUrl, resolveSearchInput, searchProviders } from "@/lib/search";
 import type { SearchProviderId } from "@/lib/types";
@@ -9,10 +9,10 @@ import { useHomeStore } from "@/stores/home-store";
 
 export function SearchBar() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [providerMenuOpen, setProviderMenuOpen] = useState(false);
   const providerId = useHomeStore((state) => state.preferences.searchProvider);
+  const chrome = useHomeStore((state) => state.preferences.chrome);
   const setSearchProvider = useHomeStore((state) => state.setSearchProvider);
   const provider = useMemo(() => searchProviders.find((item) => item.id === providerId) ?? searchProviders[0], [providerId]);
   const providerBrand = getBrandIcon(provider.id);
@@ -38,49 +38,31 @@ export function SearchBar() {
   }
 
   return (
-    <div>
+    <div className="w-full">
       <form
         role="search"
         onSubmit={onSubmit}
-        className="relative z-40 mx-auto flex min-h-[78px] max-w-[820px] items-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--panel)] px-5 shadow-search backdrop-blur-xl"
+        className="glass-heavy relative z-40 flex min-h-[52px] w-full items-center gap-1.5 rounded-full border border-white/50 px-3 py-1 shadow-[var(--shadow-glass)]"
       >
-        <FiSearch className="shrink-0 text-2xl text-[color:var(--muted)]" aria-hidden />
-        <input
-          ref={inputRef}
-          aria-label="Search the web"
-          role="searchbox"
-          autoFocus
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search the web..."
-          className="h-16 min-w-0 flex-1 bg-transparent text-[17px] font-medium outline-none placeholder:font-normal placeholder:text-[color:var(--muted)] sm:text-xl"
-        />
-        <button
-          type="button"
-          aria-label="Search settings"
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] text-lg text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
-        >
-          <FiSliders />
-        </button>
-        <div className="relative" ref={menuRef}>
+        <div className="relative">
           <button
             type="button"
             aria-label="Choose search engine"
             aria-expanded={providerMenuOpen}
             onClick={() => setProviderMenuOpen((open) => !open)}
-            className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--surface-strong)] focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] sm:px-5 sm:text-base"
+            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-2.5 text-[15px] font-medium tracking-tight text-[color:var(--muted)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
           >
-            <ProviderIcon style={{ color: providerBrand.color }} />
-            <span className="hidden max-w-[118px] truncate sm:inline">{provider.label}</span>
-            <FiChevronDown className={`text-[color:var(--muted)] transition ${providerMenuOpen ? "rotate-180" : ""}`} />
+            <ProviderIcon style={{ color: providerBrand.color }} aria-hidden />
+            <span className="hidden max-w-[100px] truncate sm:inline">{provider.label}</span>
+            <FiChevronDown className={`opacity-70 transition ${providerMenuOpen ? "rotate-180" : ""}`} />
           </button>
 
           {providerMenuOpen ? (
-            <div className="absolute right-0 top-[calc(100%+12px)] z-50 max-h-[420px] w-[min(82vw,360px)] overflow-y-auto rounded-[26px] border border-[color:var(--border)] bg-[color:var(--popup)] p-3 text-left shadow-panel">
+            <div className="glass-heavy absolute left-0 top-[calc(100%+10px)] z-50 max-h-[420px] w-[min(82vw,360px)] overflow-y-auto rounded-[22px] border border-[color:var(--separator)] p-3 text-left shadow-[var(--shadow-float)]">
               {(["Web", "AI", "Media"] as const).map((group) =>
                 groupedProviders[group]?.length ? (
                   <div key={group} className="py-1">
-                    <div className="px-3 pb-2 pt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                    <div className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
                       {group}
                     </div>
                     <div className="grid gap-1">
@@ -97,7 +79,7 @@ export function SearchBar() {
                               setProviderMenuOpen(false);
                               inputRef.current?.focus();
                             }}
-                            className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)] ${
+                            className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${
                               item.id === providerId
                                 ? "bg-[color:var(--ink)] text-[color:var(--ink-inverse)]"
                                 : "text-[color:var(--ink)] hover:bg-[color:var(--surface)]"
@@ -118,10 +100,33 @@ export function SearchBar() {
             </div>
           ) : null}
         </div>
-        <button type="submit" className="sr-only">
-          Search
+
+        <input
+          ref={inputRef}
+          aria-label="Search the web"
+          role="searchbox"
+          autoFocus
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search or type g cats…"
+          className="h-11 min-w-0 flex-1 bg-transparent text-[17px] font-normal tracking-tight outline-none placeholder:text-[color:var(--muted)]"
+        />
+
+        <button
+          type="submit"
+          aria-label="Search"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[color:var(--accent)] text-lg font-semibold text-white shadow-[0_2px_8px_color-mix(in_srgb,var(--accent)_40%,transparent)] transition active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+        >
+          <FiArrowRight />
         </button>
       </form>
+      {chrome === "shown" ? (
+        <p className="mt-2.5 pl-3.5 text-[13px] font-normal text-[color:var(--muted)]">
+          Shortcuts <code className="rounded-md bg-[color:var(--surface)] px-1.5 py-0.5 font-mono text-[12px]">g</code> ·{" "}
+          <code className="rounded-md bg-[color:var(--surface)] px-1.5 py-0.5 font-mono text-[12px]">yt</code> ·{" "}
+          <code className="rounded-md bg-[color:var(--surface)] px-1.5 py-0.5 font-mono text-[12px]">ai</code>
+        </p>
+      ) : null}
     </div>
   );
 }

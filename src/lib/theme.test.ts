@@ -7,12 +7,24 @@ describe("theme utilities", () => {
       "--accent": "#4f8cff",
       "--panel": "rgba(255, 255, 255, 0.72)",
       "--ui-blur": "18px",
+      "--ui-blur-tile": "12px",
+      "--blur": "18px",
     });
   });
 
   it("returns readable text pairs with ink, muted, and inverse for light and dark contrast modes", () => {
-    expect(getReadableTextPair("light")).toEqual({ ink: "#f7faf6", muted: "#d8e0dc", inkInverse: "#17201b" });
-    expect(getReadableTextPair("dark")).toEqual({ ink: "#17201b", muted: "#66736c", inkInverse: "#f7faf6" });
+    expect(getReadableTextPair("light")).toEqual({
+      ink: "rgba(255, 255, 255, 0.92)",
+      muted: "rgba(235, 235, 245, 0.6)",
+      inkInverse: "#000000",
+    });
+    expect(getReadableTextPair("dark")).toEqual({
+      ink: "rgba(0, 0, 0, 0.88)",
+      muted: "rgba(60, 60, 67, 0.72)",
+      inkInverse: "#ffffff",
+    });
+    expect(getReadableTextPair("dark", "strong").ink).toBe("#000000");
+    expect(getReadableTextPair("light", "soft").ink).toBe("rgba(255,255,255,0.7)");
   });
 });
 

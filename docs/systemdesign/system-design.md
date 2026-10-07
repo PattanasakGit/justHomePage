@@ -1,60 +1,86 @@
 # System Design
 
+> Last verified against codebase: 2026-10-07 (branch `feat/homepage-v2`).
+
+## Stack
+
+| Layer | Choice |
+|-------|--------|
+| Runtime / package manager | Bun |
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, Tailwind CSS 4, shadcn/ui (owned copies), react-icons, lucide-react |
+| Client state | Zustand 5 + `persist` (`localStorage`, key `justhomepage:v1`, version `5`) |
+| DnD | `@dnd-kit/core` + `@dnd-kit/sortable` |
+| DB boundary | `@libsql/client` (scaffold only; not hydrating UI in v2) |
+| Unit tests | Vitest + Testing Library |
+| E2E | Playwright |
+
+Core rendering does not depend on network. Site-metadata remains an optional enhancement for favorite add.
+
 ## Architecture
 
 ```txt
-UI components
-  -> Zustand store
-    -> feature services / fetchers
-      -> Next API routes
-        -> feature services
-          -> lib/db adapter
+src/app/page.tsx
+  -> HomePage (client)
+       -> Zustand useHomeStore (persist v5)
+       -> SearchBar (multi-provider + shortcuts)
+       -> Favorites grid + folders filter + empty state
+       -> CustomizeSheet (appearance axes)
+       -> FavoriteEditor (metadata + icons)
+       -> import/export via Netscape HTML bookmarks
+
+API scaffold (unused by homepage UI in v2):
+  GET /api/favorites|widgets|settings|local-weather
 ```
 
-## Boundaries
+## Directory Map
 
-- `src/components`: UI only.
-- `src/hooks`: browser capability hooks such as geolocation, timezone, and weather synchronization.
-- `src/stores`: client state and optimistic interactions.
-- `src/features`: feature services and future validation.
-- `src/lib/db`: SQLite/libSQL client, schema, migrations.
-- `src/app/api`: thin route handlers.
+| Path | Role |
+|------|------|
+| `src/app` | Next layout, page, `globals.css` (liquid glass tokens), API routes |
+| `src/components` | UI — homepage, search, settings/customize, icons; widgets kept but unused on homepage |
+| `src/hooks` | Legacy weather hook (not used on homepage v2) |
+| `src/stores` | Zustand home store + persist migration (folders, chrome, density, contrastStrength) |
+| `src/features` | Feature services (scaffold) |
+| `src/lib` | Pure helpers: search, theme, bookmarks import/export, url, letter-avatar, image-file, db |
+| `src/data` | Defaults (favorites, folders, preferences) + `themeCatalog` |
+| `tests/e2e` | Playwright smoke |
+| `docs/ui/demo-v2.html` | Visual reference for liquid glass materials |
 
-## Persistence
+**Rule:** components must not import database code.
 
-The MVP uses Zustand `persist` for instant local browser state. The SQLite schema and routes are scaffolded so canonical persistence can be promoted feature by feature.
+## Key Flows
 
-Preferences use separate fields for visual mode and media:
+### Search
 
-- `theme`: color theme id.
-- `wallpaperImage`: compressed local image data URL or `null`.
-- `wallpaperLuminance`: average perceived luminance (0–1) sampled from the wallpaper at upload time, or `null` for legacy wallpapers; consumed by auto-contrast resolution to flip text color on dark images.
-- `font`: selected font style id.
-- `accentColor`: primary system color used by controls, focus rings, selected states, and accents.
-- `uiOpacity`: opacity of glass surfaces.
-- `blur`: blur strength for glass surfaces.
-- `contrast`: automatic/dark/light text mode.
-- `favoriteScale` and `widgetScale`: independent layout density controls.
+1. User submits query in `SearchBar`.
+2. `resolveSearchInput` may switch provider via leading shortcut token (e.g. `g cats`).
+3. Provider picker lives inside the search bar dropdown.
+4. `buildSearchUrl` navigates to the provider URL.
 
-The store migrates legacy `background` and `backgroundImage` persisted keys into `theme` and `wallpaperImage`. The persistence version is bumped when new preference fields are introduced (e.g. `wallpaperLuminance`); legacy persisted state without the field falls back to `null` and behaves like pre-luminance auto contrast (dark text).
+### Favorites / folders
 
-When `wallpaperImage` exists, the body receives `has-wallpaper`; CSS makes the uploaded image the visible page background and leaves the theme class active for tokens/accent colors. Without a wallpaper, the theme gradient is the page background.
+- Favorites + folders live in Zustand; filter by `preferences.activeFolderId` (`null` = All).
+- Reorder via `@dnd-kit` on the visible favorites list.
+- Favorite editor may call `/api/site-metadata?url=` for title/favicon defaults.
 
-Theme controls are converted into CSS variables by `src/lib/theme.ts` and applied to `document.body`. Light contrast mode also switches glass surfaces to dark translucent panels so text does not disappear over bright backgrounds.
+### Import / export
 
-Drag-heavy controls (color picker, transparency, blur sliders) bypass Zustand during the drag and write CSS variables directly to `document.body.style`. This avoids per-pixel `localStorage` writes from the persist middleware and keeps the picker smooth. The store commit only fires on pointer-up / change.
+- `src/lib/bookmarks.ts` encodes/decodes Netscape Bookmark HTML.
+- Store actions `importBookmarks` / `exportBookmarks` create folders by name when needed.
 
-Drag/drop performance notes:
+### Theme / wallpaper / customize
 
-- Favorite and widget sort scopes use separate `SortableContext`s.
-- Pointer activation waits for a short drag distance to avoid accidental layout work.
-- During active drag the body receives `dnd-active`, disabling card backdrop blur and transitions on sortable cards.
+- Axes: appearance light/dark, accent, font, transparency, blur, contrastStrength, density, chrome, wallpaper upload/clear.
+- Liquid glass CSS: heavy frost (~40 blur) on search/sheet/chrome/empty; lighter (~20) on tiles.
+- Honors `prefers-reduced-transparency` and `prefers-reduced-motion`; `@supports` fallback without backdrop-filter.
+- Persist migration v4 → v5 fills new preference fields and `folderId` on favorites.
 
-## External Data
+### Persistence
 
-- `/api/site-metadata?url=` fetches website HTML server-side and extracts `<title>` plus favicon/touch icon metadata. The client uses this as the default favorite name/logo, then lets the user override with custom icons.
-- `useLocalEnvironment` uses browser geolocation, then calls `/api/local-weather` so Open-Meteo forecast and reverse geocoding happen server-side. This avoids browser CORS failures while keeping core app rendering independent from weather requests.
+- **Canonical:** Zustand `persist` (favorites, folders, widgets retained unused, preferences).
+- **Scaffolded:** SQLite/libSQL tables remain for a later sync phase.
 
-## Vercel SQLite Caveat
+## Out of scope on homepage (v2)
 
-Do not rely on a local SQLite file in Vercel serverless. Use Turso/libSQL with `DATABASE_URL` for production.
+Weather UI, widget workspace UI. API routes may remain unused.

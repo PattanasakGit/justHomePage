@@ -1,6 +1,6 @@
 import type { IconType } from "react-icons";
 import { BsBing } from "react-icons/bs";
-import { FaLinkedin } from "react-icons/fa";
+import { FaLinkedin, FaSlack } from "react-icons/fa";
 import { FiCpu, FiGlobe, FiPlus, FiType } from "react-icons/fi";
 import {
   SiApple,
@@ -21,11 +21,10 @@ import {
   SiMedium,
   SiNetflix,
   SiNotion,
-  SiOpenai,
+  SiOpenaigym,
   SiPerplexity,
   SiPinterest,
   SiReddit,
-  SiSlack,
   SiSpotify,
   SiStripe,
   SiSubstack,
@@ -78,7 +77,7 @@ export const iconChoices = [
 ] as const;
 
 const iconMap: Record<string, { icon: IconType; color: string; label: string }> = {
-  openai: { icon: SiOpenai, color: "#119b75", label: "OpenAI" },
+  openai: { icon: SiOpenaigym, color: "#119b75", label: "OpenAI" },
   github: { icon: SiGithub, color: "#181717", label: "GitHub" },
   notion: { icon: SiNotion, color: "#111111", label: "Notion" },
   youtube: { icon: SiYoutube, color: "#ff0033", label: "YouTube" },
@@ -97,7 +96,7 @@ const iconMap: Record<string, { icon: IconType; color: string; label: string }> 
   duckduckgo: { icon: SiDuckduckgo, color: "#de5833", label: "DuckDuckGo" },
   brave: { icon: SiBrave, color: "#fb542b", label: "Brave" },
   perplexity: { icon: SiPerplexity, color: "#1f8a89", label: "Perplexity" },
-  chatgpt: { icon: SiOpenai, color: "#119b75", label: "ChatGPT" },
+  chatgpt: { icon: SiOpenaigym, color: "#119b75", label: "ChatGPT" },
   claude: { icon: SiClaude, color: "#cc785c", label: "Claude" },
   gemini: { icon: SiGooglegemini, color: "#6e7cf6", label: "Gemini" },
   copilot: { icon: BsBing, color: "#0078d4", label: "Copilot" },
@@ -107,7 +106,7 @@ const iconMap: Record<string, { icon: IconType; color: string; label: string }> 
   add: { icon: FiPlus, color: "#66736c", label: "Add" },
   letter: { icon: FiType, color: "#66736c", label: "Letter" },
   discord: { icon: SiDiscord, color: "#5865f2", label: "Discord" },
-  slack: { icon: SiSlack, color: "#611f69", label: "Slack" },
+  slack: { icon: FaSlack, color: "#611f69", label: "Slack" },
   telegram: { icon: SiTelegram, color: "#229ed9", label: "Telegram" },
   whatsapp: { icon: SiWhatsapp, color: "#25d366", label: "WhatsApp" },
   twitch: { icon: SiTwitch, color: "#9146ff", label: "Twitch" },
