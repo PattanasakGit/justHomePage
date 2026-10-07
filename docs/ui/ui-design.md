@@ -1,7 +1,7 @@
 # UI Design — Homepage v2 (sidebar toggle + add flows)
 
 **Canonical demo:** [`docs/ui/demo-v2.html`](./demo-v2.html)  
-**Status:** Awaiting user OK before Dev.
+**Status:** Signed — implemented in app (branch `cursor/homepage-v2-ui-ca13`).
 
 ## Information architecture
 
@@ -30,7 +30,7 @@ iOS grouped cards: Appearance · Icons & layout · Glass · Wallpaper.
 2. Add **folder** and **bookmark**; bookmark folder optional (`None` = root).
 3. Prefill folder select when browsing a folder.
 4. Keep Google-only, icon S–XL, Mitr, Phosphor, Settings pattern.
-5. Wait user OK before code.
+5. Shipped in Next.js app (sidebar, add flows, Google search, Mitr/Phosphor, settings).
 
 ## Out of scope
 

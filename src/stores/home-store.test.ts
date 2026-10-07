@@ -77,6 +77,14 @@ describe("home store", () => {
     expect(store.getState().preferences.wallpaperImage).toBeNull();
   });
 
+  it("updates icon size and library sidebar preferences", () => {
+    const store = createHomeStore();
+    store.getState().setIconSize("xl");
+    store.getState().setLibrarySidebarOpen(false);
+    expect(store.getState().preferences.iconSize).toBe("xl");
+    expect(store.getState().preferences.librarySidebarOpen).toBe(false);
+  });
+
   it("updates font preference", () => {
     const store = createHomeStore();
 

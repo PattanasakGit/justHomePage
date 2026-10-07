@@ -17,8 +17,9 @@
   --muted: rgba(60, 60, 67, 0.72);
   --border: rgba(0, 0, 0, 0.08);
   --separator: rgba(0, 0, 0, 0.08);
-  --accent: #007AFF;
-  --accent-text: #007AFF;
+  --accent: #0071e3;
+  --accent-text: #0071e3;
+  --sidebar-bg: rgba(246, 246, 248, 0.72);
   --accent-soft: rgba(0, 122, 255, 0.14);
   --accent-warm: #007AFF;
   --ui-blur: 40px;
@@ -80,7 +81,21 @@ body {
   min-height: 100vh;
   margin: 0;
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-mitr), ui-sans-serif, system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, #dce8ff 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 10%, #f5e4ef 0%, transparent 50%),
+    linear-gradient(180deg, #f5f5f7 0%, #eef1f6 100%);
+  background-attachment: fixed;
+}
+
+body.appearance-dark,
+body[data-theme="dark"] {
+  --sidebar-bg: rgba(22, 22, 24, 0.78);
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 0%, #1a2a4a 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 95% 5%, #3a2040 0%, transparent 50%),
+    linear-gradient(180deg, #000 0%, #121214 100%);
 }
 
 body::before {
@@ -131,19 +146,19 @@ body.contrast-light.has-wallpaper::after {
 }
 
 .font-system {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-mitr), ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-rounded {
-  font-family: "Sukhumvit Set", "SF Pro Rounded", "Nunito Sans", ui-rounded, "Thonburi", system-ui, sans-serif;
+  font-family: var(--font-mitr), ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-editorial {
-  font-family: "New York", "Iowan Old Style", "Georgia", "Thonburi", serif;
+  font-family: var(--font-thasadith), var(--font-mitr), ui-sans-serif, sans-serif;
 }
 
 .font-thaiSoft {
-  font-family: "Thonburi", "Sukhumvit Set", "Helvetica Neue", system-ui, sans-serif;
+  font-family: var(--font-thasadith), var(--font-mitr), ui-sans-serif, sans-serif;
 }
 
 .font-mono {
@@ -197,7 +212,15 @@ textarea {
 }
 
 .font-display {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-mitr), ui-sans-serif, system-ui, sans-serif;
+}
+
+.ghost-chrome {
+  background: transparent;
+}
+
+.ghost-chrome:hover {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 @keyframes fade-up {

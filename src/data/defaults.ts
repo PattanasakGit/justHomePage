@@ -8,18 +8,12 @@ export const defaultFolders: Folder[] = [
 ];
 
 export const defaultFavorites: Favorite[] = [
-  { id: "fav-openai", title: "ChatGPT", url: "https://chat.openai.com", icon: "openai", folderId: "folder-work" },
   { id: "fav-github", title: "GitHub", url: "https://github.com", icon: "github", folderId: "folder-work" },
   { id: "fav-notion", title: "Notion", url: "https://notion.so", icon: "notion", folderId: "folder-work" },
-  { id: "fav-youtube", title: "YouTube", url: "https://youtube.com", icon: "play", folderId: "folder-fun" },
-  { id: "fav-gmail", title: "Gmail", url: "https://mail.google.com", icon: "gmail", folderId: null },
-  { id: "fav-drive", title: "Drive", url: "https://drive.google.com", icon: "drive", folderId: null },
-  { id: "fav-calendar", title: "Calendar", url: "https://calendar.google.com", icon: "calendar", folderId: null },
-  { id: "fav-reddit", title: "Reddit", url: "https://reddit.com", icon: "reddit", folderId: "folder-fun" },
-  { id: "fav-x", title: "X", url: "https://x.com", icon: "x", folderId: "folder-fun" },
-  { id: "fav-linkedin", title: "LinkedIn", url: "https://linkedin.com", icon: "linkedin", folderId: "folder-work" },
-  { id: "fav-spotify", title: "Spotify", url: "https://spotify.com", icon: "spotify", folderId: "folder-fun" },
   { id: "fav-figma", title: "Figma", url: "https://figma.com", icon: "figma", folderId: "folder-learn" },
+  { id: "fav-youtube", title: "YouTube", url: "https://youtube.com", icon: "youtube", folderId: "folder-learn" },
+  { id: "fav-linear", title: "Linear", url: "https://linear.app", icon: "linear", folderId: "folder-fun" },
+  { id: "fav-openai", title: "ChatGPT", url: "https://chat.openai.com", icon: "openai", folderId: "folder-fun" },
 ];
 
 export const defaultWidgets: HomeWidget[] = [
@@ -48,6 +42,8 @@ export const defaultPreferences: Preferences = {
   wallpaperImage: null,
   wallpaperLuminance: null,
   font: "system",
+  iconSize: "md",
+  librarySidebarOpen: true,
   accentColor: DEFAULT_ACCENT_LIGHT,
   uiOpacity: 62,
   blur: 40,

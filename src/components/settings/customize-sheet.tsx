@@ -6,7 +6,8 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { fontOptions } from "@/lib/fonts";
 import { prepareWallpaperImage } from "@/lib/image-file";
-import type { Appearance, ChromeVisibility, ContrastStrength, Density, FontId } from "@/lib/types";
+import type { Appearance, ChromeVisibility, ContrastStrength, Density, FontId, IconSize } from "@/lib/types";
+import { iconSizeOptions } from "@/lib/icon-size";
 import { DEFAULT_ACCENT_DARK, DEFAULT_ACCENT_LIGHT } from "@/lib/types";
 import { useHomeStore } from "@/stores/home-store";
 
@@ -35,6 +36,7 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
   const setDensity = useHomeStore((state) => state.setDensity);
   const setChrome = useHomeStore((state) => state.setChrome);
   const setWallpaperImage = useHomeStore((state) => state.setWallpaperImage);
+  const setIconSize = useHomeStore((state) => state.setIconSize);
 
   async function onUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -74,8 +76,14 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
         className="glass-heavy mx-auto max-h-[90vh] w-full gap-0 overflow-y-auto rounded-t-[28px] border-[color:var(--separator)] bg-[color:var(--panel)] p-0 sm:top-1/2 sm:bottom-auto sm:max-h-[86vh] sm:max-w-[420px] sm:-translate-y-1/2 sm:rounded-[28px] sm:border"
       >
         <div className="mx-auto mt-2 h-1.5 w-9 rounded-full bg-black/20 sm:hidden dark:bg-white/30" aria-hidden />
-        <SheetHeader className="flex flex-row items-center justify-between px-4 pb-2 pt-3">
-          <SheetTitle className="text-xl font-bold tracking-tight text-[color:var(--ink)]">Customize</SheetTitle>
+        <SheetHeader className="flex flex-col items-center gap-2 px-4 pb-2 pt-4 text-center">
+          <div className="grid h-14 w-14 place-items-center rounded-full bg-[color:var(--accent-soft)] text-2xl" aria-hidden>
+            ⌂
+          </div>
+          <SheetTitle className="text-xl font-bold tracking-tight text-[color:var(--ink)]">Homepage</SheetTitle>
+          <p className="m-0 text-[15px] text-[color:var(--muted)]">Appearance &amp; library</p>
+        </SheetHeader>
+        <div className="flex justify-end px-4 pb-1">
           <Button
             type="button"
             variant="ghost"
@@ -84,11 +92,12 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
           >
             Done
           </Button>
-        </SheetHeader>
+        </div>
 
         <div className="space-y-5 px-4 pb-[max(28px,env(safe-area-inset-bottom))] pt-1">
+          <p className="px-1 text-[12px] font-semibold uppercase tracking-[0.04em] text-[color:var(--muted)]">Appearance</p>
           <Group>
-            <Row label="Appearance">
+            <Row label="Theme">
               <Seg>
                 <SegBtn active={preferences.appearance === "light"} onClick={() => pickAppearance("light")}>
                   Light
@@ -121,7 +130,21 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
             </Row>
           </Group>
 
+          <p className="px-1 text-[12px] font-semibold uppercase tracking-[0.04em] text-[color:var(--muted)]">Icons &amp; layout</p>
           <Group>
+            <Row label="Icon size">
+              <Seg>
+                {iconSizeOptions.map((option) => (
+                  <SegBtn
+                    key={option.id}
+                    active={preferences.iconSize === option.id}
+                    onClick={() => setIconSize(option.id as IconSize)}
+                  >
+                    {option.label}
+                  </SegBtn>
+                ))}
+              </Seg>
+            </Row>
             <Row label="Font">
               <Seg>
                 {fontOptions.map((font) => (
@@ -130,15 +153,7 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
                     active={preferences.font === font.id}
                     onClick={() => setFont(font.id as FontId)}
                   >
-                    {font.id === "system"
-                      ? "SF"
-                      : font.id === "rounded"
-                        ? "Rounded"
-                        : font.id === "editorial"
-                          ? "Serif"
-                          : font.id === "thaiSoft"
-                            ? "Thai"
-                            : "Mono"}
+                    {font.label}
                   </SegBtn>
                 ))}
               </Seg>
@@ -176,6 +191,7 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
             </Row>
           </Group>
 
+          <p className="px-1 text-[12px] font-semibold uppercase tracking-[0.04em] text-[color:var(--muted)]">Glass</p>
           <div>
             <p className="mb-2 px-1 text-[13px] text-[color:var(--muted)]">Transparency</p>
             <Group>
@@ -211,8 +227,8 @@ export function CustomizeSheet({ open, onOpenChange }: CustomizeSheetProps) {
             </Group>
           </div>
 
+          <p className="px-1 text-[12px] font-semibold uppercase tracking-[0.04em] text-[color:var(--muted)]">Wallpaper</p>
           <div>
-            <p className="mb-2 px-1 text-[13px] text-[color:var(--muted)]">Wallpaper</p>
             <Group>
               <div className="flex flex-wrap gap-2 px-3.5 py-3">
                 <Chip onClick={() => fileRef.current?.click()}>Photos…</Chip>

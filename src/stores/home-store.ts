@@ -20,6 +20,7 @@ import type {
   Folder,
   FontId,
   HomeWidget,
+  IconSize,
   Preferences,
   SearchProviderId,
   UIScale,
@@ -74,6 +75,8 @@ export type HomeState = {
   setDensity: (density: Density) => void;
   setChrome: (chrome: ChromeVisibility) => void;
   setEditMode: (editMode: boolean) => void;
+  setIconSize: (iconSize: IconSize) => void;
+  setLibrarySidebarOpen: (open: boolean) => void;
 };
 
 const makeId = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -109,7 +112,7 @@ const createHomeState: StateCreator<HomeState> = (set, get) => ({
         {
           ...favorite,
           id: makeId("fav"),
-          folderId: favorite.folderId ?? state.preferences.activeFolderId,
+          folderId: favorite.folderId === undefined ? state.preferences.activeFolderId : favorite.folderId,
         },
       ],
     })),
@@ -302,6 +305,9 @@ const createHomeState: StateCreator<HomeState> = (set, get) => ({
     })),
   setChrome: (chrome) => set((state) => ({ preferences: { ...state.preferences, chrome } })),
   setEditMode: (editMode) => set((state) => ({ preferences: { ...state.preferences, editMode } })),
+  setIconSize: (iconSize) => set((state) => ({ preferences: { ...state.preferences, iconSize } })),
+  setLibrarySidebarOpen: (librarySidebarOpen) =>
+    set((state) => ({ preferences: { ...state.preferences, librarySidebarOpen } })),
 });
 
 export function createHomeStore() {
@@ -311,7 +317,7 @@ export function createHomeStore() {
 export const useHomeStore = create<HomeState>()(
   persist(createHomeState, {
     name: "justhomepage:v1",
-    version: 5,
+    version: 6,
     migrate: (persisted) => {
       const state = persisted as Partial<HomeState> & {
         preferences?: Partial<Preferences> & {
@@ -365,6 +371,8 @@ export const useHomeStore = create<HomeState>()(
           favoriteScale: state.preferences.favoriteScale ?? scaleFromDensity(density),
           widgetScale: state.preferences.widgetScale ?? defaultPreferences.widgetScale,
           activeFolderId: state.preferences.activeFolderId ?? null,
+          iconSize: state.preferences.iconSize ?? defaultPreferences.iconSize,
+          librarySidebarOpen: state.preferences.librarySidebarOpen ?? defaultPreferences.librarySidebarOpen,
         },
       } as HomeState;
     },

@@ -12,10 +12,7 @@ A minimal, fast browser homepage for daily use â€” search and favorites first â€
 ## MVP Features (v2)
 
 ### Search
-- Search input with multiple providers.
-- Provider shortcuts in the query (leading token + rest of query).
-- Search engine picker inside the search input dropdown (no provider chip row under the bar).
-- Providers include classic web search plus AI providers (e.g. ChatGPT, Claude, Gemini, Copilot, Perplexity, You.com, Phind).
+- **Google-only** pill search bar (`Search Google` placeholder); no multi-provider picker or shortcut hints on the homepage.
 
 ### Favorites
 - Favorite website list with add, edit, delete, and reorder.

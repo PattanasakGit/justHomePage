@@ -49,6 +49,8 @@ export type Appearance = "light" | "dark";
 
 export type FontId = "system" | "rounded" | "editorial" | "thaiSoft" | "mono";
 
+export type IconSize = "sm" | "md" | "lg" | "xl";
+
 export type ContrastMode = "auto" | "dark" | "light";
 
 export type ContrastStrength = "soft" | "normal" | "strong";
@@ -105,8 +107,10 @@ export type Preferences = {
   widgetScale: UIScale;
   editMode: boolean;
   activeFolderId: string | null;
+  iconSize: IconSize;
+  librarySidebarOpen: boolean;
 };
 
-export const DEFAULT_ACCENT_LIGHT = "#007AFF";
-export const DEFAULT_ACCENT_DARK = "#0A84FF";
+export const DEFAULT_ACCENT_LIGHT = "#0071e3";
+export const DEFAULT_ACCENT_DARK = "#2997ff";
 export const ALL_FOLDER_ID = null;
