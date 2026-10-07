@@ -1,44 +1,37 @@
-# UI Design
+# UI Design — Homepage v2 (sidebar toggle + add flows)
 
-## Visual Direction
+**Canonical demo:** [`docs/ui/demo-v2.html`](./demo-v2.html)  
+**Status:** Signed — implemented in app (branch `cursor/homepage-v2-ui-ca13`).
 
-Minimal personal productivity dashboard: soft material surfaces, restrained accents, compact rounded controls, a large pill search bar, and no marketing hero.
+## Information architecture
 
-## Tokens
+| Surface | Behavior |
+|---------|----------|
+| **Desktop (≥860px)** | Library **sidebar** toggleable via top-left control (`data-sidebar=open\|closed`). Open: folders + New Bookmark / New Folder / Import / Export. Closed: main full-bleed. |
+| **Mobile** | Same top-left control opens/closes **full-screen** Library sheet. |
+| **Add** | Unified sheet: **Bookmark** (name, URL, folder = None \| folder) or **Folder** (name). Entry points: sidebar/sheet footers + dashed Add tile (defaults to Bookmark). |
+| **Main canvas** | Greeting · Google search · favorites grid. No folder rail / + strip. |
 
-- Radius: `18px` for favorite/widget cards, `28px` for drawers/modals, full pill for search.
-- Spacing: `4, 8, 12, 16, 24, 32`.
-- Motion: `120-180ms`.
-- Surface: translucent with enough contrast.
-- Accents: muted teal plus warm coral.
+## Kept product rules
 
-## Component Rules
+- Google-only search
+- Space over stacked bars; soft borderless search
+- Mitr (+ Thasadith); Phosphor Light
+- Icon size S–XL; flat glass; accent `#0071e3`
+- Brand tiles = metadata / SVG plates
 
-- Icon buttons need accessible labels.
-- Brand icons use free icon sets exposed through `react-icons` / Simple Icons where available.
-- Brand icon plates always use a light off-white surface (independent of contrast mode) so colored and dark logos remain visible.
-- Cards are only for repeated tiles, widgets, and dialogs.
-- Avoid nested cards.
-- Use stable dimensions for tiles and widgets.
-- Background upload previews through the page background layer with a subtle blur/veil for contrast.
+## Settings (unchanged this pass)
 
-## Theme Catalog
+iOS grouped cards: Appearance · Icons & layout · Glass · Wallpaper.
 
-- Themes live in `src/data/themes.ts` as a single `themeCatalog` array; each entry has `category` (`light`/`dark`), `style` (`soft`/`minimal`/`vibrant`/`neon`), a Tailwind preview gradient, and a curated `accents` palette.
-- Settings UI groups themes under Light/Dark tabs and labels each thumbnail with its style tag.
-- Picking a theme also resets the accent to the theme's first palette entry when the current accent is not part of the new palette.
+## Dev requirements
 
-## Sliders
+1. Sidebar open/close on **desktop and mobile** (desktop collapses sticky sidebar; mobile uses full-screen sheet). Shared toggle affordance top-left.
+2. Add **folder** and **bookmark**; bookmark folder optional (`None` = root).
+3. Prefill folder select when browsing a folder.
+4. Keep Google-only, icon S–XL, Mitr, Phosphor, Settings pattern.
+5. Shipped in Next.js app (sidebar, add flows, Google search, Mitr/Phosphor, settings).
 
-- Use the shared `RangeField` with a custom track (filled portion uses `--accent`) and themed thumb (`.theme-range`).
-- The current value is displayed as a chip on the right of the slider label, in `--ink` text on a `--surface` chip.
-- Drag updates write CSS variables directly via `buildThemeVariables`; the store commit only fires on release.
+## Out of scope
 
-## Theme Tokens
-
-- `--ink` — primary text color, flips with auto contrast.
-- `--ink-inverse` — opposite of `--ink`, used for text on `--ink` backgrounds (selected pills, segmented buttons).
-- `--muted` — secondary text, paired with `--ink`.
-- `--surface`, `--surface-strong`, `--panel`, `--tile` — glass surfaces; auto-flip from white-translucent to dark-translucent based on contrast. Opacity follows the user's transparency slider.
-- `--popup` — near-opaque (96%) surface for dropdowns and modal containers; ignores the transparency slider so popups stay readable on busy wallpapers.
-- Components must use these tokens instead of hardcoded `bg-white/*` or `text-white` so light/dark contrast both stay readable.
+Multi-search engines; 3D controls; Safari e2e.

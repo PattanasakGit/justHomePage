@@ -1,18 +1,19 @@
-import type { Favorite, HomeWidget, Preferences } from "@/lib/types";
+import type { Favorite, Folder, HomeWidget, Preferences } from "@/lib/types";
+import { DEFAULT_ACCENT_LIGHT } from "@/lib/types";
+
+export const defaultFolders: Folder[] = [
+  { id: "folder-work", name: "Work" },
+  { id: "folder-learn", name: "Learn" },
+  { id: "folder-fun", name: "Fun" },
+];
 
 export const defaultFavorites: Favorite[] = [
-  { id: "fav-openai", title: "ChatGPT", url: "https://chat.openai.com", icon: "openai" },
-  { id: "fav-github", title: "GitHub", url: "https://github.com", icon: "github" },
-  { id: "fav-notion", title: "Notion", url: "https://notion.so", icon: "notion" },
-  { id: "fav-youtube", title: "YouTube", url: "https://youtube.com", icon: "play" },
-  { id: "fav-gmail", title: "Gmail", url: "https://mail.google.com", icon: "gmail" },
-  { id: "fav-drive", title: "Drive", url: "https://drive.google.com", icon: "drive" },
-  { id: "fav-calendar", title: "Calendar", url: "https://calendar.google.com", icon: "calendar" },
-  { id: "fav-reddit", title: "Reddit", url: "https://reddit.com", icon: "reddit" },
-  { id: "fav-x", title: "X", url: "https://x.com", icon: "x" },
-  { id: "fav-linkedin", title: "LinkedIn", url: "https://linkedin.com", icon: "linkedin" },
-  { id: "fav-spotify", title: "Spotify", url: "https://spotify.com", icon: "spotify" },
-  { id: "fav-figma", title: "Figma", url: "https://figma.com", icon: "figma" },
+  { id: "fav-github", title: "GitHub", url: "https://github.com", icon: "github", folderId: "folder-work" },
+  { id: "fav-notion", title: "Notion", url: "https://notion.so", icon: "notion", folderId: "folder-work" },
+  { id: "fav-figma", title: "Figma", url: "https://figma.com", icon: "figma", folderId: "folder-learn" },
+  { id: "fav-youtube", title: "YouTube", url: "https://youtube.com", icon: "youtube", folderId: "folder-learn" },
+  { id: "fav-linear", title: "Linear", url: "https://linear.app", icon: "linear", folderId: "folder-fun" },
+  { id: "fav-openai", title: "ChatGPT", url: "https://chat.openai.com", icon: "openai", folderId: "folder-fun" },
 ];
 
 export const defaultWidgets: HomeWidget[] = [
@@ -37,14 +38,21 @@ export const defaultWidgets: HomeWidget[] = [
 export const defaultPreferences: Preferences = {
   searchProvider: "google",
   theme: "linen",
+  appearance: "light",
   wallpaperImage: null,
   wallpaperLuminance: null,
   font: "system",
-  accentColor: "#339b8e",
-  uiOpacity: 76,
-  blur: 14,
+  iconSize: "md",
+  librarySidebarOpen: true,
+  accentColor: DEFAULT_ACCENT_LIGHT,
+  uiOpacity: 62,
+  blur: 40,
   contrast: "auto",
+  contrastStrength: "normal",
+  density: "cozy",
+  chrome: "shown",
   favoriteScale: "cozy",
   widgetScale: "cozy",
   editMode: false,
+  activeFolderId: null,
 };

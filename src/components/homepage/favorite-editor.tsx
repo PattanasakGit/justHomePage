@@ -4,21 +4,24 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { FiRefreshCw, FiX } from "react-icons/fi";
 import { LETTER_ICON, getBrandIcon, iconChoices } from "@/components/icons/brand-icon";
 import { getLetterAvatar } from "@/lib/letter-avatar";
-import type { Favorite, FavoriteInput } from "@/lib/types";
+import type { Favorite, FavoriteInput, Folder } from "@/lib/types";
 import { inferTitleFromUrl, normalizeUrl } from "@/lib/url";
 
 type FavoriteEditorProps = {
   favorite: Favorite | null;
+  folders: Folder[];
   open: boolean;
   onClose: () => void;
   onSave: (favorite: FavoriteInput) => void;
+  onDelete?: () => void;
 };
 
-export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEditorProps) {
+export function FavoriteEditor({ favorite, folders, open, onClose, onSave, onDelete }: FavoriteEditorProps) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [icon, setIcon] = useState<string>(LETTER_ICON);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [folderId, setFolderId] = useState<string | null>(null);
   const [metadataStatus, setMetadataStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const normalizedUrl = useMemo(() => normalizeUrl(url), [url]);
   const inferredTitle = useMemo(() => inferTitleFromUrl(url), [url]);
@@ -29,6 +32,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
     setUrl(favorite?.url ?? "");
     setIcon(favorite?.icon ?? LETTER_ICON);
     setIconUrl(favorite?.iconUrl ?? null);
+    setFolderId(favorite?.folderId ?? null);
     setMetadataStatus("idle");
   }, [favorite, open]);
 
@@ -66,7 +70,13 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!title.trim() || !normalizedUrl) return;
-    onSave({ title: title.trim(), url: normalizedUrl, icon, iconUrl });
+    onSave({
+      title: title.trim(),
+      url: normalizedUrl,
+      icon,
+      iconUrl,
+      folderId,
+    });
     onClose();
   }
 
@@ -84,7 +94,7 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
             type="button"
             aria-label="Close favorite editor"
             onClick={onClose}
-            className="grid h-10 w-10 place-items-center rounded-full hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+            className="grid h-11 w-11 place-items-center rounded-full hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
           >
             <FiX />
           </button>
@@ -109,6 +119,24 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
             placeholder="https://github.com"
           />
         </label>
+
+        <label className="mt-4 block text-sm font-semibold text-[color:var(--muted)]">
+          Folder
+          <select
+            value={folderId ?? ""}
+            onChange={(event) => setFolderId(event.target.value || null)}
+            aria-label="Favorite folder"
+            className="mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 text-[color:var(--ink)] outline-none focus:ring-2 focus:ring-[color:var(--accent)]"
+          >
+            <option value="">All (no folder)</option>
+            {folders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
         <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--muted)]">
           <div className="flex min-w-0 items-center gap-2">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/85 shadow-inner">
@@ -181,6 +209,19 @@ export function FavoriteEditor({ favorite, open, onClose, onSave }: FavoriteEdit
         >
           Save favorite
         </button>
+
+        {favorite && onDelete ? (
+          <button
+            type="button"
+            onClick={() => {
+              onDelete();
+              onClose();
+            }}
+            className="mt-3 h-12 w-full rounded-2xl border border-[#b42318]/35 bg-transparent text-sm font-semibold text-[#b42318] transition hover:bg-red-500/10 focus:outline-none focus:ring-2 focus:ring-[#b42318]"
+          >
+            Delete favorite
+          </button>
+        ) : null}
       </form>
     </div>
   );
